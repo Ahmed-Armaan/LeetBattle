@@ -21,7 +21,8 @@ func GetUser(req_body io.Reader, userAgent string) (string, int) {
 	}
 
 	PayLoad := map[string]string{
-		"query": `{ user { username } }`,
+		//"query": `{ user { username } }`,
+		"query": `{ user { username }, userStatus{ avatar } }`,
 	}
 	var graphqlBuf bytes.Buffer
 	err = json.NewEncoder(&graphqlBuf).Encode(PayLoad)
