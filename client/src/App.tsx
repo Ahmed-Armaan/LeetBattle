@@ -11,6 +11,10 @@ const router = createBrowserRouter([
     path: "/rooms",
     element: <Rooms />,
   },
+  {
+    path: "*",
+    element: <Home />
+  },
 ])
 
 export default router

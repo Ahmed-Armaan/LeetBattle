@@ -3,13 +3,23 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/Ahmed-Armaan/LeetBattle/leetcode_api"
+	"github.com/Ahmed-Armaan/LeetBattle/utils"
 )
+
+type joinReq struct{
+	RoomId string `json:"roomId"`
+}
 
 func RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login", login)
+	mux.HandleFunc("/create", createRoom)
+	mux.HandleFunc("/join", joinRoom)
+	mux.HandleFunc("/ws", WSHandler)
 	handler := corsMiddleware(mux)
 
 	return handler
@@ -58,4 +68,97 @@ func login(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, username, http.StatusInternalServerError)
 	}
+}
+
+func createRoom(w http.ResponseWriter, r *http.Request) {
+	roomId := utils.Random(12)
+	leaderKey := utils.Random(12)
+	if roomId == nil || leaderKey == nil{
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	roomsMu.Lock()
+	rooms[string(roomId)] = &Room{
+		LeaderKey: string(leaderKey),
+		Teams: [2][5]*Player{}
+	}
+	roomsMu.Unlock()
+
+	resBody := map[string]string{
+		"roomId":    string(roomId),
+		"leaderKey": string(leaderKey),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resBody)
+
+	go func() {
+		time.Sleep(60 * time.Second)
+		roomsMu.Lock()
+		room, exits := rooms[string(roomId)]
+		if !exits {
+			return
+		}
+
+		empty := true
+		for _, team := range room.Teams {
+			for _, player := range team {
+				if player != nil {
+					empty = false
+					break
+				}
+			}
+		}
+
+		if empty {
+			delete(room, string(roomId))
+		}
+		roomsMu.Unlock()
+	}()
+}
+
+func joinRoom(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+
+	var req joinReq
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusInternalServerError)
+		return
+	}
+
+	roomsMu.Lock()
+	defer roomsMu.Unlock()
+
+	room, ok := rooms[req.RoomId]
+	if !ok {
+		errMsg := "Room " + req.RoomId + "not found"
+		http.Error(w, errMsg, http.StatusBadRequest)
+		return
+	}
+
+	full := true
+	for _, team := range room.Teams {
+		for _, player := range team{
+			if player == nil {
+				full = false
+				break
+			}
+		}
+	}
+	
+	if full {
+		http.Error(w, "Room already full", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"join":"proceed"}`))
 }

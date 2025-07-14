@@ -16,6 +16,10 @@ function Rooms() {
     }
   }, []);
 
+  const roomReq = async () => {
+
+  }
+
   return (
     <>
       <Navbar />
@@ -61,4 +65,4 @@ function Rooms() {
   )
 }
 
-export default Rooms 
+export default Rooms
