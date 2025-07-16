@@ -49,7 +49,6 @@ func GetUser(req_body io.Reader, userAgent string) (string, int) {
 		return "Internal Server Error: Cannot read received data", http.StatusInternalServerError
 	}
 
-	fmt.Println("Response:", string(body))
 	return string(body), http.StatusOK
 }
 

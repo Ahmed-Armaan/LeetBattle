@@ -2,15 +2,15 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Ahmed-Armaan/LeetBattle/leetcode_api"
 	"github.com/Ahmed-Armaan/LeetBattle/utils"
 )
 
-type joinReq struct{
+type joinReq struct {
 	RoomId string `json:"roomId"`
 }
 
@@ -71,9 +71,14 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func createRoom(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	roomId := utils.Random(12)
 	leaderKey := utils.Random(12)
-	if roomId == nil || leaderKey == nil{
+	if roomId == nil || leaderKey == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -81,7 +86,7 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 	roomsMu.Lock()
 	rooms[string(roomId)] = &Room{
 		LeaderKey: string(leaderKey),
-		Teams: [2][5]*Player{}
+		Teams:     [2][5]*Player{},
 	}
 	roomsMu.Unlock()
 
@@ -113,7 +118,7 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if empty {
-			delete(room, string(roomId))
+			delete(rooms, string(roomId))
 		}
 		roomsMu.Unlock()
 	}()
@@ -138,21 +143,20 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 
 	room, ok := rooms[req.RoomId]
 	if !ok {
-		errMsg := "Room " + req.RoomId + "not found"
-		http.Error(w, errMsg, http.StatusBadRequest)
+		http.Error(w, "Invalid room id", http.StatusBadRequest)
 		return
 	}
 
 	full := true
 	for _, team := range room.Teams {
-		for _, player := range team{
+		for _, player := range team {
 			if player == nil {
 				full = false
 				break
 			}
 		}
 	}
-	
+
 	if full {
 		http.Error(w, "Room already full", http.StatusBadRequest)
 		return
