@@ -8,15 +8,17 @@ import (
 )
 
 type Room struct {
-	LeaderKey string
-	Teams     [2][5]*Player
-	Mutex     sync.RWMutex
+	LeaderKey      string
+	NextEmptyPlace [2]int
+	Teams          [2][5]*Player
+
+	Mutex sync.RWMutex
 }
 
 type Player struct {
-	Conn *websocket.Conn
-	Room string
-	Team int
+	Conn     *websocket.Conn
+	PlayerId string
+	Room     string
 }
 
 var (
@@ -37,7 +39,35 @@ func WSHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	requestedRoom := r.URL.Query().Get("room")
+	playerId := r.URL.Query().Get("player")
+	handleJoin(conn, requestedRoom, playerId)
 	handleWSActions(conn)
+}
+
+func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
+	currPlayer := Player{
+		Conn:     conn,
+		PlayerId: playerId,
+		Room:     roomId,
+	}
+
+	roomsMu.Lock()
+	Room := rooms[roomId]
+	roomsMu.Unlock()
+
+	Room.Mutex.Lock()
+	defer Room.Mutex.Unlock()
+	Room.Teams[Room.NextEmptyPlace[0]][Room.NextEmptyPlace[1]] = &currPlayer
+
+	switch Room.NextEmptyPlace {
+	case [2]int{1, 4}:
+		Room.NextEmptyPlace = [2]int{-1, -1}
+	case [2]int{0, 4}:
+		Room.NextEmptyPlace = [2]int{1, 0}
+	default:
+		Room.NextEmptyPlace[1]++
+	}
 }
 
 func handleWSActions(conn *websocket.Conn) {}

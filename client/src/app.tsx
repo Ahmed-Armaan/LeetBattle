@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
-import Home from "./Home";
-import Rooms from "./Rooms";
+import Home from "./home";
+import Rooms from "./rooms";
+import Lobby from "./lobby";
 
 const router = createBrowserRouter([
   {
@@ -10,6 +11,10 @@ const router = createBrowserRouter([
   {
     path: "/rooms",
     element: <Rooms />,
+  },
+  {
+    path: "/lobby/:roomId/:playerId",
+    element: <Lobby />
   },
   {
     path: "*",

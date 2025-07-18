@@ -13,6 +13,21 @@ interface CookieData {
   userImage: string;
 }
 
+//Session Storager curr state:
+//leetcode-data{
+//  leetcodeData{
+//    csrftoken,
+//    leetcodesession,
+//  },
+//  username,
+//  userImage,
+//},
+//roomData{
+//  roomId
+//  leader
+//  leaderKey
+//}
+
 function Home() {
   const csrfToken = useRef<HTMLInputElement>(null);
   const leetcodeSession = useRef<HTMLInputElement>(null);

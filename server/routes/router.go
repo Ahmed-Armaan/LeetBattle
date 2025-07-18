@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -85,8 +84,9 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomsMu.Lock()
 	rooms[string(roomId)] = &Room{
-		LeaderKey: string(leaderKey),
-		Teams:     [2][5]*Player{},
+		LeaderKey:      string(leaderKey),
+		Teams:          [2][5]*Player{},
+		NextEmptyPlace: [2]int{0, 0},
 	}
 	roomsMu.Unlock()
 
@@ -106,20 +106,22 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		if !exits {
 			return
 		}
-
-		empty := true
-		for _, team := range room.Teams {
-			for _, player := range team {
-				if player != nil {
-					empty = false
-					break
-				}
-			}
-		}
-
-		if empty {
+		if room.NextEmptyPlace == [2]int{0, 0} {
 			delete(rooms, string(roomId))
 		}
+		//	empty := true
+		//	for _, team := range room.Teams {
+		//		for _, player := range team {
+		//			if player != nil {
+		//				empty = false
+		//				break
+		//			}
+		//		}
+		//	}
+
+		//	if empty {
+		//		delete(rooms, string(roomId))
+		//	}
 		roomsMu.Unlock()
 	}()
 }
@@ -147,14 +149,17 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	full := true
-	for _, team := range room.Teams {
-		for _, player := range team {
-			if player == nil {
-				full = false
-				break
-			}
-		}
+	full := false
+	//for _, team := range room.Teams {
+	//	for _, player := range team {
+	//		if player == nil {
+	//			full = false
+	//			break
+	//		}
+	//	}
+	//}
+	if room.NextEmptyPlace == [2]int{-1, -1} {
+		full = true
 	}
 
 	if full {

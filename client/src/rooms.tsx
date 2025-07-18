@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Navbar from './navbar'
 import './tailwind.css'
+import { useNavigate } from 'react-router';
 
 interface RoomData {
   roomId: string,
@@ -15,6 +16,7 @@ function Rooms() {
   const [roomJoinErr, createRoomJoinErr] = useState([false, ""]);
 
   const roomToJoin = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const data = sessionStorage.getItem("leetcode-data");
@@ -73,9 +75,8 @@ function Rooms() {
           throw new Error("request could not be made");
       }
       else {
-        console.log("success")
+        navigate(`/lobby/${roomId}/${username}`)
       }
-
     }
     catch (err) {
       if (err instanceof Error)
