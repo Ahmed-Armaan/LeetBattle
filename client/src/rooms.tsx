@@ -14,19 +14,36 @@ function Rooms() {
   const [currFormState, changeFormState] = useState("default");
   const [roomCreationErr, createRoomCreationErr] = useState(false);
   const [roomJoinErr, createRoomJoinErr] = useState([false, ""]);
-
   const roomToJoin = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  //  useEffect(() => {
+  //    const data = sessionStorage.getItem("leetcode-data");
+  //    if (data) {
+  //      const parsed = JSON.parse(data);
+  //      if (parsed?.username) {
+  //        setUsername(parsed.username);
+  //      }
+  //    }
+  //  }, []);
+
   useEffect(() => {
+    const uname = getUserName()
+    if (uname !== "") {
+      setUsername(uname);
+    }
+  })
+
+  const getUserName = (): string => {
     const data = sessionStorage.getItem("leetcode-data");
     if (data) {
       const parsed = JSON.parse(data);
-      if (parsed?.userImage) {
-        setUsername(parsed.username);
+      if (parsed?.username) {
+        return parsed.username
       }
     }
-  }, []);
+    return "";
+  }
 
   const createRoomReq = async () => {
     try {
@@ -49,6 +66,7 @@ function Rooms() {
         leaderKey: responseData.leaderKey,
       };
       sessionStorage.setItem("roomData", JSON.stringify(roomData));
+      navigate(`/lobby/${responseData.roomId}/${getUserName()}`)
     }
     catch {
       createRoomCreationErr(true)
@@ -75,7 +93,7 @@ function Rooms() {
           throw new Error("request could not be made");
       }
       else {
-        navigate(`/lobby/${roomId}/${username}`)
+        navigate(`/lobby/${roomId}/${getUserName()}`)
       }
     }
     catch (err) {

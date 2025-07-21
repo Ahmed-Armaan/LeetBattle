@@ -14,11 +14,12 @@ const WsActions = {
 }
 
 function Lobby() {
-  const { roomId, username } = useParams();
-  const wsRef = useRef<WebSocket | null>(null);
+  const { roomId, playerId } = useParams();
+  const wsRef = useRef<WebSocket>(null);
   const navigate = useNavigate();
 
-  const MakeWsActionReq = (action: string, payload: string) => {
+  const MakeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
+    if (ws === null) return;
     const wsActionReq: WsActionsReq = {
       action: action,
       payload: payload,
@@ -27,24 +28,44 @@ function Lobby() {
   }
 
   useEffect(() => {
-    const ws = new WebSocket(`http://localhost:8080/${roomId}/${username}`);
+    const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomId}&player=${playerId}`);
     wsRef.current = ws;
 
     const navigateToRooms = () => { navigate("/rooms") };
-    ws.onerror = () => navigateToRooms;
-    ws.onclose = () => navigateToRooms;
+    ws.onerror = () => navigateToRooms();
+    ws.onclose = () => navigateToRooms();
 
     ws.onopen = () => {
-      if (username) {
-        MakeWsActionReq(WsActions.JoinNotify, username);
+      if (playerId) {
+        //      const wsActionReq: WsActionsReq = {
+        //        action: WsActions.JoinNotify,
+        //        payload: playerId,
+        //      };
+        //      ws.send(JSON.stringify(wsActionReq));
+        MakeWsActionReq(WsActions.JoinNotify, playerId, ws);
       }
+    };
+
+    ws.onclose = () => {
+      console.log("closed")
     }
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
+  const test = () => {
+    for (let i = 0; i < 4; i++) {
+      wsRef.current?.send("testing");
+    }
+  }
 
   return (
     <>
       <Navbar />
+      <h1>Lobby</h1>
+      <button onClick={test}>hello</button>
     </>
   )
 }

@@ -1,18 +1,17 @@
 package routes
 
 import (
+	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
 type Room struct {
 	LeaderKey      string
 	NextEmptyPlace [2]int
 	Teams          [2][5]*Player
-
-	Mutex sync.RWMutex
+	Mutex          sync.RWMutex
 }
 
 type Player struct {
@@ -70,4 +69,18 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 	}
 }
 
-func handleWSActions(conn *websocket.Conn) {}
+func handleWSActions(conn *websocket.Conn) {
+	defer conn.Close()
+
+	for {
+		// Read message from client
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Println("read error:", err)
+			break
+		}
+		fmt.Println(string(msg))
+	}
+
+	// Unmarshal JSON into Go struct
+}
