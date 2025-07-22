@@ -16,7 +16,7 @@ const WsActions = {
 function Lobby() {
   const { roomId, playerId } = useParams();
   const wsRef = useRef<WebSocket>(null);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const MakeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
     if (ws === null) return;
@@ -24,24 +24,19 @@ function Lobby() {
       action: action,
       payload: payload,
     }
-    wsRef.current?.send(JSON.stringify(wsActionReq));
+    ws.send(JSON.stringify(wsActionReq));
   }
 
   useEffect(() => {
     const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomId}&player=${playerId}`);
     wsRef.current = ws;
 
-    const navigateToRooms = () => { navigate("/rooms") };
-    ws.onerror = () => navigateToRooms();
-    ws.onclose = () => navigateToRooms();
+    // const navigateToRooms = () => { navigate("/rooms") };
+    // ws.onerror = () => navigateToRooms();
+    // ws.onclose = () => navigateToRooms();
 
     ws.onopen = () => {
       if (playerId) {
-        //      const wsActionReq: WsActionsReq = {
-        //        action: WsActions.JoinNotify,
-        //        payload: playerId,
-        //      };
-        //      ws.send(JSON.stringify(wsActionReq));
         MakeWsActionReq(WsActions.JoinNotify, playerId, ws);
       }
     };
@@ -55,18 +50,12 @@ function Lobby() {
     };
   }, []);
 
-  const test = () => {
-    for (let i = 0; i < 4; i++) {
-      wsRef.current?.send("testing");
-    }
-  }
-
   return (
-    <>
-      <Navbar />
-      <h1>Lobby</h1>
-      <button onClick={test}>hello</button>
-    </>
+    <div className="min-h-screen flex flex-col">
+      <Navbar inLobby={true} roomId={roomId} />
+      <div className="flex-1 bg-black">
+      </div>
+    </div>
   )
 }
 

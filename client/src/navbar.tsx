@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const Navbar = () => {
+function Navbar({ inLobby = false, roomId = "" }) {
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [username, setUserName] = useState("");
   const [optionsState, toggleOptions] = useState(false);
@@ -16,10 +16,20 @@ const Navbar = () => {
     }
   }, []);
 
+  const copyRoomId = () => { }
+
   return (
     <div className="bg-gray-900 text-white px-6 py-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         <div className="text-xl font-bold">Leetbattle</div>
+
+        {inLobby &&
+          <div className="text-xl font-bold border-2 border-dotted p-2 rounded-md"
+            onClick={copyRoomId}>
+            {roomId}
+          </div>
+        }
+
         <div className="relative">
           {imageURL && (
             <img
@@ -40,6 +50,7 @@ const Navbar = () => {
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

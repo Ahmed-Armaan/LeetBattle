@@ -71,16 +71,16 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 
 func handleWSActions(conn *websocket.Conn) {
 	defer conn.Close()
+	message := "hello from server"
+	_ = conn.WriteMessage(websocket.TextMessage, []byte(message))
 
 	for {
-		// Read message from client
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println("read error:", err)
 			break
 		}
 		fmt.Println(string(msg))
+		_ = conn.WriteMessage(websocket.TextMessage, []byte(message))
 	}
-
-	// Unmarshal JSON into Go struct
 }
