@@ -87,6 +87,7 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		LeaderKey:      string(leaderKey),
 		Teams:          [2][5]*Player{},
 		NextEmptyPlace: [2]int{0, 0},
+		ch:             make(chan string)
 	}
 	roomsMu.Unlock()
 

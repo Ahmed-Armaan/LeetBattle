@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router';
+import { useWs } from './context/wsContext';
 import './tailwind.css'
 
 interface PostData {
@@ -33,8 +34,14 @@ function Home() {
   const leetcodeSession = useRef<HTMLInputElement>(null);
   const [invalidInput, enableInvalidInput] = useState(false);
   const navigate = useNavigate();
+  const { wsContextVal, setwsContext } = useWs();
 
   useEffect(() => {
+    if (wsContextVal !== null) {
+      wsContextVal.close();
+      setwsContext(null);
+    }
+
     try {
       const data = sessionStorage.getItem("leetcode-data");
       if (data) {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Navbar from './navbar'
 import './tailwind.css'
 import { useNavigate } from 'react-router';
+import { useWs } from './context/wsContext';
 
 interface RoomData {
   roomId: string,
@@ -16,6 +17,7 @@ function Rooms() {
   const [roomJoinErr, createRoomJoinErr] = useState([false, ""]);
   const roomToJoin = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { wsContextVal, setwsContext } = useWs();
 
   //  useEffect(() => {
   //    const data = sessionStorage.getItem("leetcode-data");
@@ -28,6 +30,11 @@ function Rooms() {
   //  }, []);
 
   useEffect(() => {
+    if (wsContextVal !== null) {
+      wsContextVal.close();
+      setwsContext(null);
+    }
+
     const uname = getUserName()
     if (uname !== "") {
       setUsername(uname);

@@ -11,6 +11,7 @@ type Room struct {
 	LeaderKey      string
 	NextEmptyPlace [2]int
 	Teams          [2][5]*Player
+	ch             chan string
 	Mutex          sync.RWMutex
 }
 
@@ -23,6 +24,12 @@ type Player struct {
 var (
 	rooms   = make(map[string]*Room)
 	roomsMu sync.RWMutex
+)
+
+var (
+	JoinNotify   = "join_notify"
+	SendSolution = "send_solution"
+	Forfiet      = "forfiet"
 )
 
 var upgrader = websocket.Upgrader{
@@ -71,8 +78,6 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 
 func handleWSActions(conn *websocket.Conn) {
 	defer conn.Close()
-	message := "hello from server"
-	_ = conn.WriteMessage(websocket.TextMessage, []byte(message))
 
 	for {
 		_, msg, err := conn.ReadMessage()
@@ -81,6 +86,5 @@ func handleWSActions(conn *websocket.Conn) {
 			break
 		}
 		fmt.Println(string(msg))
-		_ = conn.WriteMessage(websocket.TextMessage, []byte(message))
 	}
 }

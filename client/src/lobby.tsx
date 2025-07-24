@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router"
 import Navbar from "./navbar";
+import { useWs } from "./context/wsContext";
 
 interface WsActionsReq {
   action: string,
@@ -13,10 +14,15 @@ const WsActions = {
   Forfiet: "forfiet",
 }
 
+function teamCard() {
+
+}
+
 function Lobby() {
   const { roomId, playerId } = useParams();
   const wsRef = useRef<WebSocket>(null);
   //const navigate = useNavigate();
+  const { wsContextVal, setwsContext } = useWs();
 
   const MakeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
     if (ws === null) return;
@@ -30,6 +36,7 @@ function Lobby() {
   useEffect(() => {
     const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomId}&player=${playerId}`);
     wsRef.current = ws;
+    setwsContext(ws);
 
     // const navigateToRooms = () => { navigate("/rooms") };
     // ws.onerror = () => navigateToRooms();
@@ -45,9 +52,9 @@ function Lobby() {
       console.log("closed")
     }
 
-    return () => {
-      ws.close();
-    };
+    //    return () => {
+    //      ws.close();
+    //    };
   }, []);
 
   return (
