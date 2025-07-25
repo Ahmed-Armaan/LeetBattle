@@ -1,10 +1,14 @@
 package routes
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"net/http"
+	"strings"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type Room struct {
@@ -19,6 +23,16 @@ type Player struct {
 	Conn     *websocket.Conn
 	PlayerId string
 	Room     string
+}
+
+type Teams struct {
+	Team1 []string `json:"team1"`
+	Team2 []string `json:"team2"`
+}
+
+type WsReqFormat struct {
+	Action  string `json:"action"`
+	Payload string `json:"payload"`
 }
 
 var (
@@ -48,7 +62,23 @@ func WSHandler(w http.ResponseWriter, r *http.Request) {
 	requestedRoom := r.URL.Query().Get("room")
 	playerId := r.URL.Query().Get("player")
 	handleJoin(conn, requestedRoom, playerId)
-	handleWSActions(conn)
+	wsReceiver(conn)
+}
+
+func roomBroadcaster(room *Room) {
+	for msg := range room.ch {
+		room.Mutex.RLock()
+		for i := range room.Teams {
+			for j := range room.Teams[i] {
+				player := room.Teams[i][j]
+				if player == nil {
+					continue
+				}
+				_ = player.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
+			}
+		}
+		room.Mutex.RUnlock()
+	}
 }
 
 func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
@@ -59,8 +89,12 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 	}
 
 	roomsMu.Lock()
-	Room := rooms[roomId]
+	Room, ok := rooms[roomId]
 	roomsMu.Unlock()
+	if !ok {
+		conn.WriteMessage(websocket.TextMessage, []byte("room not found"))
+		return
+	}
 
 	Room.Mutex.Lock()
 	defer Room.Mutex.Unlock()
@@ -74,9 +108,46 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 	default:
 		Room.NextEmptyPlace[1]++
 	}
+	announceTeams(Room)
 }
 
-func handleWSActions(conn *websocket.Conn) {
+func announceTeams(Room *Room) {
+	var team1, team2 []string
+
+	for i := 0; i < 2; i++ {
+		for j := 0; j < 5; j++ {
+			if Room.Teams[i][j] == nil {
+				break
+			}
+			switch i {
+			case 0:
+				team1 = append(team1, Room.Teams[i][j].PlayerId)
+			case 1:
+				team2 = append(team2, Room.Teams[i][j].PlayerId)
+			}
+		}
+	}
+
+	TeamData := &Teams{
+		Team1: team1,
+		Team2: team2,
+	}
+
+	var teamBuf bytes.Buffer
+	_ = json.NewEncoder(&teamBuf).Encode(TeamData)
+
+	wsReq := &WsReqFormat{
+		Action:  JoinNotify,
+		Payload: teamBuf.String(),
+	}
+
+	var reqBuf bytes.Buffer
+	_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+
+	Room.ch <- reqBuf.String()
+}
+
+func wsReceiver(conn *websocket.Conn) {
 	defer conn.Close()
 
 	for {
@@ -86,5 +157,7 @@ func handleWSActions(conn *websocket.Conn) {
 			break
 		}
 		fmt.Println(string(msg))
+		var wsReq WsReqFormat
+		_ = json.NewDecoder(strings.NewReader(string(msg))).Decode(&wsReq)
 	}
 }

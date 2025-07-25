@@ -87,8 +87,9 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		LeaderKey:      string(leaderKey),
 		Teams:          [2][5]*Player{},
 		NextEmptyPlace: [2]int{0, 0},
-		ch:             make(chan string)
+		ch:             make(chan string),
 	}
+	new_room := rooms[string(roomId)]
 	roomsMu.Unlock()
 
 	resBody := map[string]string{
@@ -100,6 +101,7 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resBody)
 
+	go roomBroadcaster(new_room)
 	go func() {
 		time.Sleep(60 * time.Second)
 		roomsMu.Lock()
@@ -150,7 +152,7 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	full := false
+	//full := false
 	//for _, team := range room.Teams {
 	//	for _, player := range team {
 	//		if player == nil {
@@ -159,11 +161,11 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 	//		}
 	//	}
 	//}
-	if room.NextEmptyPlace == [2]int{-1, -1} {
-		full = true
-	}
+	//if room.NextEmptyPlace == [2]int{-1, -1} {
+	//	full = true
+	//}
 
-	if full {
+	if room.NextEmptyPlace == [2]int{-1, -1} {
 		http.Error(w, "Room already full", http.StatusBadRequest)
 		return
 	}
