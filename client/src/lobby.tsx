@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router"
-import Navbar from "./navbar";
 import { useWs } from "./context/wsContext";
 import { UseTeams } from "./context/teamContext";
+import Navbar from "./navbar";
+import GameConrolBar from "./gamecontrolbar";
+import TeamCard from "./teamCard";
+import './tailwind.css'
 
 interface WsActionsReq {
   action: string,
@@ -20,20 +23,6 @@ const WsActions = {
   Forfiet: "forfiet",
 }
 
-function TeamCard({ team }: { team: string[] | undefined }) {
-  return (
-    <div className="bg-gray-800 text-white p-4 rounded-md shadow-md w-1/2 m-2">
-      <ul>
-        {team?.map((player, idx) => (
-          <li key={idx} className="text-2xl py-1 px-2 my-2 mx-2 border border-white rounded-md">
-            {player}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function Lobby() {
   const { roomId, playerId } = useParams();
   const wsRef = useRef<WebSocket>(null);
@@ -41,6 +30,7 @@ function Lobby() {
   const { wsContextVal, setwsContext } = useWs();
   const { team1, team2, setteam1context, setteam2context } = UseTeams();
   const [teams, setTeams] = useState<Teams | undefined>(undefined);
+  const [isLeader, setLeader] = useState(false);
 
   const makeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
     if (ws === null) return;
@@ -86,6 +76,12 @@ function Lobby() {
     ws.onclose = () => {
       console.log("closed")
     }
+
+    var ss = sessionStorage.getItem("roomData");
+    if (ss) {
+      console.log(JSON.parse(ss).leader);
+      setLeader(JSON.parse(ss).leader);
+    }
   }, []);
 
   return (
@@ -95,6 +91,7 @@ function Lobby() {
         <TeamCard team={teams?.team1} />
         <TeamCard team={teams?.team2} />
       </div>
+      <GameConrolBar leader={isLeader} />
     </div>
   )
 }

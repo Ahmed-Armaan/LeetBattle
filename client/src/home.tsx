@@ -14,20 +14,16 @@ interface CookieData {
   userImage: string;
 }
 
-//Session Storager curr state:
-//leetcode-data{
-//  leetcodeData{
-//    csrftoken,
-//    leetcodesession,
-//  },
-//  username,
-//  userImage,
-//},
-//roomData{
-//  roomId
-//  leader
-//  leaderKey
-//}
+/*
+Session Storager curr state:
+leetcode-data{
+  interface CookieData defined above
+  },
+  roomData{
+  interface RoomData defined in ./rooms.tsx
+  }
+}
+*/
 
 function Home() {
   const csrfToken = useRef<HTMLInputElement>(null);

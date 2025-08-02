@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import Home from "./home";
 import Rooms from "./rooms";
 import Lobby from "./lobby";
+import PlayGround from "./playground";
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: "/lobby/:roomId/:playerId",
     element: <Lobby />
+  },
+  {
+    path: "/playground",
+    element: <PlayGround />
   },
   {
     path: "*",

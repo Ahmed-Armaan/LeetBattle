@@ -10,8 +10,8 @@ interface TeamsContextType {
 const TeamContext = createContext<TeamsContextType | undefined>(undefined);
 
 export function TeamContextProvider({ children }: { children: ReactNode }) {
-  const [team1, setTeam1] = useState<number[]>([]);
-  const [team2, setTeam2] = useState<number[]>([]);
+  const [team1, setTeam1] = useState<string[]>([]);
+  const [team2, setTeam2] = useState<string[]>([]);
 
   return (
     <TeamContext.Provider value={{
