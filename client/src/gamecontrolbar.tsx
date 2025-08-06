@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import './tailwind.css'
 
 function GameControlBar({ leader }: { leader: boolean }) {
   const [gameDuration, setGameDuration] = useState(15);
-  const [gameDifficulty, setGameDifficulty] = useState("Medium");
+  const [gameDifficulty, setGameDifficulty] = useState(1);// using index of the array rather than string
   const [dropDownState, toggleDropDown] = useState(false);
+  const navigate = useNavigate();
 
   const difficultyOptions = ["Easy", "Medium", "Hard"];
 
@@ -41,7 +43,7 @@ function GameControlBar({ leader }: { leader: boolean }) {
                   <li key={id}>
                     <button
                       onClick={() => {
-                        setGameDifficulty(value);
+                        setGameDifficulty(id);
                         toggleDropDown(false);
                       }}
                       className="block px-4 py-2 hover:bg-gray-600 w-full text-left"
@@ -56,7 +58,25 @@ function GameControlBar({ leader }: { leader: boolean }) {
         }
 
         <div className="flex items-start">
-          <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">{leader ? "Start" : "Leave"}</button>
+          {leader &&
+            <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
+              onClick={() => {
+                navigate("/playground", {
+                  state: {
+                    time: gameDuration,
+                    difficulty: gameDifficulty,
+                  },
+                });
+              }}>
+              Start
+            </button>
+          }
+          {
+            !leader &&
+            <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500">
+              Exit
+            </button>
+          }
         </div>
       </div >
     </>

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/Ahmed-Armaan/LeetBattle/leetcode_api"
 	"github.com/gorilla/websocket"
 )
 
@@ -32,7 +34,14 @@ type Teams struct {
 
 type WsReqFormat struct {
 	Action  string `json:"action"`
+	RoomId  string `json:"roomid"`
 	Payload string `json:"payload"`
+}
+
+type WsResFormat struct {
+	Action  string `json:"action"`
+	Payload string `json:"payload"`
+	Error   string `json:"error"`
 }
 
 var (
@@ -40,10 +49,12 @@ var (
 	roomsMu sync.RWMutex
 )
 
-var (
+const (
 	JoinNotify   = "join_notify"
+	StartGame    = "start_game"
 	SendSolution = "send_solution"
 	Forfiet      = "forfiet"
+	Test         = "test"
 )
 
 var upgrader = websocket.Upgrader{
@@ -65,19 +76,19 @@ func WSHandler(w http.ResponseWriter, r *http.Request) {
 	wsReceiver(conn)
 }
 
-func roomBroadcaster(room *Room) {
-	for msg := range room.ch {
-		room.Mutex.RLock()
-		for i := range room.Teams {
-			for j := range room.Teams[i] {
-				player := room.Teams[i][j]
+func roomBroadcaster(Room *Room) {
+	for msg := range Room.ch {
+		Room.Mutex.RLock()
+		for i := range Room.Teams {
+			for j := range Room.Teams[i] {
+				player := Room.Teams[i][j]
 				if player == nil {
 					continue
 				}
 				_ = player.Conn.WriteMessage(websocket.TextMessage, []byte(msg))
 			}
 		}
-		room.Mutex.RUnlock()
+		Room.Mutex.RUnlock()
 	}
 }
 
@@ -114,8 +125,8 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 func announceTeams(Room *Room) {
 	var team1, team2 []string
 
-	for i := 0; i < 2; i++ {
-		for j := 0; j < 5; j++ {
+	for i := range 2 {
+		for j := range 5 {
 			if Room.Teams[i][j] == nil {
 				break
 			}
@@ -138,6 +149,7 @@ func announceTeams(Room *Room) {
 
 	wsReq := &WsReqFormat{
 		Action:  JoinNotify,
+		RoomId:  "",
 		Payload: teamBuf.String(),
 	}
 
@@ -159,5 +171,40 @@ func wsReceiver(conn *websocket.Conn) {
 		fmt.Println(string(msg))
 		var wsReq WsReqFormat
 		_ = json.NewDecoder(strings.NewReader(string(msg))).Decode(&wsReq)
+		wsReq.wsActions(conn)
+	}
+}
+
+func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
+	roomsMu.Lock()
+	Room, ok := rooms[wsReq.RoomId]
+	roomsMu.Unlock()
+	if !ok {
+		conn.WriteMessage(websocket.TextMessage, []byte("room not found"))
+		return
+	}
+
+	Room.Mutex.Lock()
+	defer Room.Mutex.Unlock()
+	var reqBuf bytes.Buffer
+
+	switch wsReq.Action {
+	case Test:
+		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		Room.ch <- reqBuf.String()
+
+	case StartGame:
+		diff, err := strconv.Atoi(wsReq.Payload)
+		problems, err := leetcodeapi.FetchProblems(diff)
+		var payload string
+		if err != nil {
+			payload = "Error!!"
+		} else {
+			payload = problems
+		}
+
+		wsReq.Payload = payload
+		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		Room.ch <- reqBuf.String()
 	}
 }

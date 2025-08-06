@@ -2,26 +2,29 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router"
 import { useWs } from "./context/wsContext";
 import { UseTeams } from "./context/teamContext";
+import { makeWsActionReq, WsActions } from "./utils/wsActionReq";
+import type { WsActionsReq } from "./utils/wsActionReq";
 import Navbar from "./navbar";
 import GameConrolBar from "./gamecontrolbar";
 import TeamCard from "./teamCard";
 import './tailwind.css'
 
-interface WsActionsReq {
-  action: string,
-  payload: string,
-}
+// ws requires a {action, payload} to interract
+//interface WsActionsReq {
+//  action: string,
+//  payload: string,
+//}
 
 interface Teams {
   team1: string[],
   team2: string[],
 }
 
-const WsActions = {
-  JoinNotify: "join_notify",
-  SendSolution: "send_solution",
-  Forfiet: "forfiet",
-}
+//const WsActions = {
+//  JoinNotify: "join_notify",
+//  SendSolution: "send_solution",
+//  Forfiet: "forfiet",
+//}
 
 function Lobby() {
   const { roomId, playerId } = useParams();
@@ -32,24 +35,32 @@ function Lobby() {
   const [teams, setTeams] = useState<Teams | undefined>(undefined);
   const [isLeader, setLeader] = useState(false);
 
-  const makeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
-    if (ws === null) return;
-    const wsActionReq: WsActionsReq = {
-      action: action,
-      payload: payload,
-    }
-    ws.send(JSON.stringify(wsActionReq));
-  }
+  //  const makeWsActionReq = (action: string, payload: string, ws: WebSocket | null = wsRef.current) => {
+  //    if (ws === null) return;
+  //    const wsActionReq: WsActionsReq = {
+  //      action: action,
+  //      payload: payload,
+  //    }
+  //    ws.send(JSON.stringify(wsActionReq));
+  //  }
 
   const receiveWsRes = (msg: string) => {
     var wsReq: WsActionsReq = JSON.parse(msg);
 
     switch (wsReq.action) {
       case WsActions.JoinNotify:
-        var payload: Teams = JSON.parse(wsReq.payload);
-        setTeams(payload);
-        setteam1context(payload.team1);
-        setteam2context(payload.team2);
+        var teamPayload: Teams = JSON.parse(wsReq.payload);
+        setTeams(teamPayload);
+        setteam1context(teamPayload.team1);
+        setteam2context(teamPayload.team2);
+        break;
+      case WsActions.Test:
+        var Testpayload: string = wsReq.payload;
+        console.log(`test message : ${Testpayload}`);
+        break;
+      case WsActions.StartGame:
+        var Testpayload: string = wsReq.payload;
+        console.log(`problem List: ${Testpayload}`);
         break;
     }
   }
@@ -64,8 +75,8 @@ function Lobby() {
     // ws.onclose = () => navigateToRooms();
 
     ws.onopen = () => {
-      if (playerId) {
-        makeWsActionReq(WsActions.JoinNotify, playerId, ws);
+      if (playerId && roomId) {
+        makeWsActionReq(WsActions.JoinNotify, roomId, playerId, wsContextVal);
       }
     };
 
@@ -79,7 +90,6 @@ function Lobby() {
 
     var ss = sessionStorage.getItem("roomData");
     if (ss) {
-      console.log(JSON.parse(ss).leader);
       setLeader(JSON.parse(ss).leader);
     }
   }, []);
