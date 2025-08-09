@@ -1,11 +1,13 @@
 import { useLocation } from "react-router-dom"; // also fix import here
 import { useWs } from "./context/wsContext";
+import { UseProblem } from "./context/problemContext";
 import { WsActions, makeWsActionReq } from "./utils/wsActionReq";
 import { useEffect } from "react";
 
 function PlayGround() {
   const location = useLocation();
   const { wsContextVal, setwsContext } = useWs();
+  const { title, description } = UseProblem();
   const ss = sessionStorage.getItem("roomData");
 
   const state = location.state as {
@@ -29,7 +31,8 @@ function PlayGround() {
 
   return (
     <>
-      <div>The Playground</div>
+      <div>{title}</div>
+      <div>{description}</div>
     </>
   );
 }

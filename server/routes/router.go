@@ -13,12 +13,17 @@ type joinReq struct {
 	RoomId string `json:"roomId"`
 }
 
+type problemReq struct {
+	Slug string `json:"slug"`
+}
+
 func RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/create", createRoom)
 	mux.HandleFunc("/join", joinRoom)
 	mux.HandleFunc("/ws", WSHandler)
+	mux.HandleFunc("/getContent", getProblemContent)
 	handler := corsMiddleware(mux)
 
 	return handler
@@ -112,19 +117,6 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		if room.NextEmptyPlace == [2]int{0, 0} {
 			delete(rooms, string(roomId))
 		}
-		//	empty := true
-		//	for _, team := range room.Teams {
-		//		for _, player := range team {
-		//			if player != nil {
-		//				empty = false
-		//				break
-		//			}
-		//		}
-		//	}
-
-		//	if empty {
-		//		delete(rooms, string(roomId))
-		//	}
 		roomsMu.Unlock()
 	}()
 }
@@ -152,19 +144,6 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//full := false
-	//for _, team := range room.Teams {
-	//	for _, player := range team {
-	//		if player == nil {
-	//			full = false
-	//			break
-	//		}
-	//	}
-	//}
-	//if room.NextEmptyPlace == [2]int{-1, -1} {
-	//	full = true
-	//}
-
 	if room.NextEmptyPlace == [2]int{-1, -1} {
 		http.Error(w, "Room already full", http.StatusBadRequest)
 		return
@@ -173,4 +152,35 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"join":"proceed"}`))
+}
+
+func getProblemContent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+
+	var req problemReq
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	problem, err := leetcodeapi.FetchContent(req.Slug)
+	if err != nil {
+		http.Error(w, "Problem cannot be fetched", http.StatusInternalServerError)
+		return
+	}
+
+	jsonBytes, err := json.Marshal(problem)
+	if err != nil {
+		http.Error(w, "Failed to encode problem data", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(jsonBytes))
 }

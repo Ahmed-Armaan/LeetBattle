@@ -54,6 +54,7 @@ const (
 	StartGame    = "start_game"
 	SendSolution = "send_solution"
 	Forfiet      = "forfiet"
+	Error        = "error"
 	Test         = "test"
 )
 
@@ -93,18 +94,33 @@ func roomBroadcaster(Room *Room) {
 }
 
 func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
+	roomsMu.Lock()
+	Room, ok := rooms[roomId]
+	roomsMu.Unlock()
+
+	wsReq := &WsReqFormat{
+		Action:  Error,
+		RoomId:  "",
+		Payload: "",
+	}
+	var reqBuf bytes.Buffer
+
+	if !ok {
+		wsReq.Payload = "room not found"
+		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		conn.WriteMessage(websocket.TextMessage, reqBuf.Bytes())
+		return
+	} else if Room.NextEmptyPlace == [2]int{-1, -1} {
+		wsReq.Payload = "room already full"
+		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		conn.WriteMessage(websocket.TextMessage, reqBuf.Bytes())
+		return
+	}
+
 	currPlayer := Player{
 		Conn:     conn,
 		PlayerId: playerId,
 		Room:     roomId,
-	}
-
-	roomsMu.Lock()
-	Room, ok := rooms[roomId]
-	roomsMu.Unlock()
-	if !ok {
-		conn.WriteMessage(websocket.TextMessage, []byte("room not found"))
-		return
 	}
 
 	Room.Mutex.Lock()

@@ -10,7 +10,7 @@ import (
 )
 
 type Problems struct {
-	ProblemId [5]string `json:"problemid"`
+	ProblemSlug [5]string `json:"problemSlug"`
 }
 
 type GraphQLRequest struct {
@@ -23,10 +23,8 @@ type GraphQLResponse struct {
 		ProblemsetQuestionList struct {
 			Total     int `json:"total"`
 			Questions []struct {
-				Title              string `json:"title"`
-				TitleSlug          string `json:"titleSlug"`
-				Difficulty         string `json:"difficulty"`
-				QuestionFrontendId string `json:"questionFrontendId"`
+				TitleSlug  string `json:"titleSlug"`
+				IsPaidOnly bool   `json:"isPaidOnly"`
 			} `json:"questions"`
 		} `json:"problemsetQuestionList"`
 	} `json:"data"`
@@ -45,10 +43,8 @@ query getProblems($categorySlug: String, $limit: Int, $skip: Int, $filters: Ques
   ) {
     total: totalNum
     questions: data {
-      title
       titleSlug
-      difficulty
-      questionFrontendId
+      isPaidOnly
     }
   }
 }
@@ -67,14 +63,19 @@ func FetchProblems(diff int) (string, error) {
 	}
 	var problems Problems
 
-	for i := range 5 {
+	for i := 0; i < 5; {
 		random := rand.Intn(total)
 		lcResp, err = lcFetchRequest(Difficulty[diff], random)
 		if err != nil {
 			return "", errors.New("Cound not fetch problems")
 		}
 
-		problems.ProblemId[i] = lcResp.Data.ProblemsetQuestionList.Questions[0].QuestionFrontendId
+		if lcResp.Data.ProblemsetQuestionList.Questions[0].IsPaidOnly {
+			continue
+		} else {
+			problems.ProblemSlug[i] = lcResp.Data.ProblemsetQuestionList.Questions[0].TitleSlug
+			i++
+		}
 	}
 
 	jsonData, err := json.Marshal(problems)
