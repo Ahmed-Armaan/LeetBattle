@@ -54,6 +54,7 @@ const (
 	StartGame    = "start_game"
 	SendSolution = "send_solution"
 	Forfiet      = "forfiet"
+	Starting     = "starting"
 	Error        = "error"
 	Test         = "test"
 )
@@ -211,8 +212,15 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 
 	case StartGame:
 		diff, err := strconv.Atoi(wsReq.Payload)
+
+		//		wsReq.Payload = ""
+		//		wsReq.Action = Starting
+		//		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		//		Room.ch <- reqBuf.String()
+
 		problems, err := leetcodeapi.FetchProblems(diff)
 		var payload string
+		fmt.Println(payload)
 		if err != nil {
 			payload = "Error!!"
 		} else {

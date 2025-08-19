@@ -6,9 +6,16 @@ import (
 	"net/http"
 )
 
+type CodeSnippet struct {
+	Lang     string `json:"lang"`
+	LangSlug string `json:"langSlug"`
+	Code     string `json:"code"`
+}
+
 type Question struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title        string        `json:"title"`
+	Content      string        `json:"content"`
+	CodeSnippets []CodeSnippet `json:"codeSnippets"`
 }
 
 type GraphQLResponseData struct {
@@ -25,6 +32,11 @@ query getQuestionDetail($titleSlug: String!) {
   question(titleSlug: $titleSlug) {
     title
     content
+    codeSnippets {
+      lang
+      langSlug
+      code
+    }
   }
 }`
 

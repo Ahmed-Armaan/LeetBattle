@@ -10,6 +10,8 @@ const WsActions = {
 	StartGame: "start_game",
 	SendSolution: "send_solution",
 	Forfiet: "forfiet",
+	Starting: "starting",
+	Error: "error",
 	Test: "test",
 }
 

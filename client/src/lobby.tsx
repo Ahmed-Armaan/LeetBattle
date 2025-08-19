@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { useWs } from "./context/wsContext";
 import { UseTeams } from "./context/teamContext";
 import { UseProblem } from "./context/problemContext";
@@ -20,7 +21,24 @@ interface Problems {
   problemSlug: string[];
 }
 
+interface ProblemContentreq {
+  slug: string;
+}
+
+export interface CodeSnippet {
+  lang: string;
+  langSlug: string;
+  code: string;
+}
+
+interface ProblemContentRes {
+  title: string;
+  content: string;
+  codeSnippets: CodeSnippet[];
+}
+
 function Lobby() {
+  const navigate = useNavigate();
   const { roomId, playerId } = useParams();
   const { setwsContext } = useWs();
   const { team1, team2, setteam1context, setteam2context } = UseTeams();
@@ -75,7 +93,7 @@ function Lobby() {
     }
   }, []);
 
-  const receiveWsRes = (msg: string) => {
+  const receiveWsRes = async (msg: string) => {
     const wsReq: WsActionsReq = JSON.parse(msg);
 
     switch (wsReq.action) {
@@ -89,6 +107,11 @@ function Lobby() {
       case WsActions.Test: {
         const testpayload: string = wsReq.payload;
         console.log(`test message : ${testpayload}`);
+        break;
+      }
+
+      case WsActions.Starting: {
+        toggleLoading(true);
         break;
       }
 
@@ -106,12 +129,30 @@ function Lobby() {
           console.log(`${usernameRef.current}`);
 
           if (usernameRef.current === p1 || usernameRef.current === p2) {
-            toggleLoading(!isLoading);
-            console.log(problemspayload.problemSlug[i]);
             if (problemspayload) {
-              console.log(`problem context: ${title}, ${description}`);
-            } else {
-              console.warn(`No problem found for index ${i}`);
+              console.log(`problem context: ${problemspayload.problemSlug[i]}`);
+              var contentReqBody: ProblemContentreq = {
+                slug: problemspayload.problemSlug[i],
+              };
+              await fetch("http://localhost:8080/getContent", {
+                method: "POST",
+                body: JSON.stringify(contentReqBody),
+              })
+                .then(res => res.json())
+                .then((jsonRes: ProblemContentRes) => {
+                  console.log(jsonRes)
+                  navigate("/playground", {
+                    state: {
+                      title: jsonRes.title,
+                      content: jsonRes.content,
+                      codeSnippets: jsonRes.codeSnippets,
+                    }
+                  });
+                })
+                .catch((err) => {
+                  console.log(`Error: ${err}`);
+                })
+              return;
             }
             break;
           }
