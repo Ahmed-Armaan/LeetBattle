@@ -24,6 +24,7 @@ func RegisterRoutes() http.Handler {
 	mux.HandleFunc("/join", joinRoom)
 	mux.HandleFunc("/ws", WSHandler)
 	mux.HandleFunc("/getContent", getProblemContent)
+	mux.HandleFunc("/submit", submit)
 	handler := corsMiddleware(mux)
 
 	return handler
@@ -178,6 +179,34 @@ func getProblemContent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Failed to encode problem data", http.StatusInternalServerError)
 		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+
+func submit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+
+	var data leetcodeapi.SubmissionData
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+	}
+
+	submitStatus, err := leetcodeapi.Submit(data, r.UserAgent())
+	if err != nil {
+		http.Error(w, "Could not submit solution", http.StatusInternalServerError)
+	}
+
+	jsonBytes, err := json.Marshal(submitStatus)
+	if err != nil {
+		http.Error(w, "Received response improper", http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

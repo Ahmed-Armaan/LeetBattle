@@ -15,6 +15,7 @@ type CodeSnippet struct {
 type Question struct {
 	Title        string        `json:"title"`
 	Content      string        `json:"content"`
+	QuestionId   string        `josn:"questionId"`
 	CodeSnippets []CodeSnippet `json:"codeSnippets"`
 }
 
@@ -32,6 +33,7 @@ query getQuestionDetail($titleSlug: String!) {
   question(titleSlug: $titleSlug) {
     title
     content
+    questionId
     codeSnippets {
       lang
       langSlug

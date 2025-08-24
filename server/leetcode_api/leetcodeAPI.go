@@ -21,7 +21,6 @@ func GetUser(req_body io.Reader, userAgent string) (string, int) {
 	}
 
 	PayLoad := map[string]string{
-		//"query": `{ user { username } }`,
 		"query": `{ user { username }, userStatus{ avatar } }`,
 	}
 	var graphqlBuf bytes.Buffer
@@ -29,7 +28,7 @@ func GetUser(req_body io.Reader, userAgent string) (string, int) {
 	if err != nil {
 		return "Internal Server Error: cannot marshal JSON request", http.StatusInternalServerError
 	}
-	headers := buildHeader(&cookies, userAgent)
+	headers := buildHeader(&cookies, userAgent, "https://leetcode.com")
 
 	req, err := http.NewRequest("POST", "https://leetcode.com/graphql", &graphqlBuf)
 	if err != nil {
@@ -52,11 +51,11 @@ func GetUser(req_body io.Reader, userAgent string) (string, int) {
 	return string(body), http.StatusOK
 }
 
-func buildHeader(cookies *Cookies, userAgnet string) http.Header {
+func buildHeader(cookies *Cookies, userAgnet string, url string) http.Header {
 	cookie := fmt.Sprintf("csrftoken=%s; LEETCODE_SESSION=%s", cookies.CsrfToken, cookies.LeetcodeSession)
 	headers := http.Header{}
 	headers.Set("content-type", "application/json")
-	headers.Set("Referer", "https://leetcode.com")
+	headers.Set("Referer", url)
 	headers.Set("User-Agent", userAgnet)
 	headers.Set("X-CSRFTOKEN", cookies.CsrfToken)
 	headers.Set("Cookie", cookie)

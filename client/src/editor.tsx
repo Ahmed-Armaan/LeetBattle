@@ -1,12 +1,23 @@
-import { useState, useEffect } from "react";
-import { Editor } from "@monaco-editor/react";
+import React, { useState, useEffect } from "react";
+import { Editor, type OnMount } from "@monaco-editor/react";
+import type * as monaco from "monaco-editor";
 import Notification from "./notification";
 
-function Monaco({ boilerplate }: { boilerplate: Map<string, string> }) {
-  const [currLanguage, setLanguage] = useState("cpp");
+function Monaco({ boilerplate, editorRef, currLanguage, setLanguage }: {
+  boilerplate: Map<string, string>;
+  editorRef: React.RefObject<monaco.editor.IStandaloneCodeEditor | null>;
+  currLanguage: string;
+  setLanguage: React.Dispatch<React.SetStateAction<string>>
+}) {
+  //const [currLanguage, setLanguage] = useState("cpp");
+
   const [currBoilerplate, setBoilerplate] = useState(boilerplate.get("cpp"));
   const [showNotification, toggleNotification] = useState(false);
   const [notifMessage, setNotifMessage] = useState("");
+
+  const handlemount: OnMount = (editor) => {
+    editorRef.current = editor;
+  }
 
   useEffect(() => {
     let newBoilerplate: string | undefined = boilerplate.get(currLanguage);
@@ -45,10 +56,11 @@ function Monaco({ boilerplate }: { boilerplate: Map<string, string> }) {
       </div>
 
       <Editor
-        height="85vh"
+        height="84vh"
         language={currLanguage}
         value={currBoilerplate}
         theme="vs-dark"
+        onMount={handlemount}
       />
     </div>
   );

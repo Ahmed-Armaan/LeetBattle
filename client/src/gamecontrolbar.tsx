@@ -81,13 +81,6 @@ function GameControlBar({ leader }: { leader: boolean }) {
               onClick={() => {
                 makeWsReq();
               }}
-            //              onClick={() => {
-            //                navigate("/playground", {
-            //                  state: {
-            //                    time: gameDuration,
-            //                    difficulty: gameDifficulty,
-            //                  },
-            //                });
             >
               Start
             </button>

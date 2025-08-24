@@ -31,9 +31,10 @@ export interface CodeSnippet {
   code: string;
 }
 
-interface ProblemContentRes {
+export interface ProblemContentRes {
   title: string;
   content: string;
+  QuestionId: string;
   codeSnippets: CodeSnippet[];
 }
 
@@ -140,12 +141,10 @@ function Lobby() {
               })
                 .then(res => res.json())
                 .then((jsonRes: ProblemContentRes) => {
-                  console.log(jsonRes)
                   navigate("/playground", {
                     state: {
-                      title: jsonRes.title,
-                      content: jsonRes.content,
-                      codeSnippets: jsonRes.codeSnippets,
+                      ...jsonRes,
+                      slug: contentReqBody.slug,
                     }
                   });
                 })
@@ -159,6 +158,7 @@ function Lobby() {
         }
         break;
       }
+
     }
   };
 

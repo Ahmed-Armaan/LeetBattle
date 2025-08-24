@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { useWs } from './context/wsContext';
 import './tailwind.css'
 
-interface PostData {
+export interface PostData {
   csrftoken: string;
   leetcodesession: string;
 }
