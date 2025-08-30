@@ -87,17 +87,6 @@ func getSubmissionId(data SubmissionData, userAgent string) (int, error) {
 }
 
 func pollSubmissionResult(submissionId string, cookies Cookies, userAgent string) (PollRes, error) {
-	//statusMap := map[string]bool{
-	//	"Accepted":              true,
-	//	"Wrong Answer":          true,
-	//	"Memory Limit Exceeded": true,
-	//	"Output Limit Exceeded": true,
-	//	"Time Limit Exceeded":   true,
-	//	"Runtime Error":         true,
-	//	"Internal Error":        true,
-	//	"Compile Error":         true,
-	//	"Timeout":               true,
-	//}
 	url := fmt.Sprintf("https://leetcode.com/submissions/detail/%s/check/", submissionId)
 	client := &http.Client{}
 

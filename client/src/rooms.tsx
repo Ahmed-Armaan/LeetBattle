@@ -82,6 +82,8 @@ function Rooms() {
 
   const joinRoomReq = async () => {
     const roomId = roomToJoin.current?.value;
+    if (roomId === undefined) return;
+
     try {
       const response = await fetch("http://localhost:8080/join", {
         method: "POST",
@@ -100,6 +102,13 @@ function Rooms() {
           throw new Error("request could not be made");
       }
       else {
+        const roomData: RoomData = {
+          roomId: roomId,
+          leader: false,
+          leaderKey: "",
+        };
+
+        sessionStorage.setItem("roomData", JSON.stringify(roomData));
         navigate(`/lobby/${roomId}/${getUserName()}`)
       }
     }

@@ -11,19 +11,21 @@ import GameConrolBar from "./gamecontrolbar";
 import TeamCard from "./teamCard";
 import Loading from "./loading";
 import "./tailwind.css";
+import { receiveWsResFactory } from "./utils/wshandler";
+import { UseTimer } from "./context/TimerContext";
 
 interface Teams {
   team1: string[];
   team2: string[];
 }
 
-interface Problems {
-  problemSlug: string[];
-}
-
-interface ProblemContentreq {
-  slug: string;
-}
+//interface Problems {
+//  problemSlug: string[];
+//}
+//
+//interface ProblemContentreq {
+//  slug: string;
+//}
 
 export interface CodeSnippet {
   lang: string;
@@ -42,8 +44,9 @@ function Lobby() {
   const navigate = useNavigate();
   const { roomId, playerId } = useParams();
   const { setwsContext } = useWs();
-  const { team1, team2, setteam1context, setteam2context } = UseTeams();
-  const { title, description, setTitileContext, setDescriptionContext } = UseProblem();
+  const { team1, team2, setteam1context, setteam2context, setTeam1Scores, setTeam2Scores } = UseTeams();
+  const { time, setTime } = UseTimer();
+  //  const { title, description, setTitileContext, setDescriptionContext } = UseProblem();
   const [username, setUsername] = useState("");
   const [isLeader, setLeader] = useState(false);
   const [currTeams, setCurrTeams] = useState<Teams>({ team1, team2 });
@@ -70,6 +73,19 @@ function Lobby() {
     wsRef.current = ws;
     setwsContext(ws);
 
+    const receiveWsRes = receiveWsResFactory({
+      setteam1context,
+      setteam2context,
+      setTeam1Scores,
+      setTeam2Scores,
+      toggleLoading,
+      setTime,
+      //time,
+      currTeamsRef,
+      usernameRef,
+      navigate,
+    });
+
     ws.onopen = () => {
       if (playerId && roomId) {
         makeWsActionReq(WsActions.JoinNotify, roomId, playerId, ws);
@@ -93,74 +109,6 @@ function Lobby() {
       setUsername(JSON.parse(ss).username);
     }
   }, []);
-
-  const receiveWsRes = async (msg: string) => {
-    const wsReq: WsActionsReq = JSON.parse(msg);
-
-    switch (wsReq.action) {
-      case WsActions.JoinNotify: {
-        const teamPayload: Teams = JSON.parse(wsReq.payload);
-        setteam1context(teamPayload.team1);
-        setteam2context(teamPayload.team2);
-        break;
-      }
-
-      case WsActions.Test: {
-        const testpayload: string = wsReq.payload;
-        console.log(`test message : ${testpayload}`);
-        break;
-      }
-
-      case WsActions.Starting: {
-        toggleLoading(true);
-        break;
-      }
-
-      case WsActions.StartGame: {
-        const problemspayload: Problems = JSON.parse(wsReq.payload);
-
-        for (let i = 0; i < 5; i++) {
-          console.log("Latest currTeams:", currTeamsRef.current);
-
-          const p1 = currTeamsRef.current.team1?.[i];
-          const p2 = currTeamsRef.current.team2?.[i];
-
-          console.log(`team1: ${currTeamsRef.current.team1}`);
-          console.log(`team2: ${currTeamsRef.current.team2}`);
-          console.log(`${usernameRef.current}`);
-
-          if (usernameRef.current === p1 || usernameRef.current === p2) {
-            if (problemspayload) {
-              console.log(`problem context: ${problemspayload.problemSlug[i]}`);
-              var contentReqBody: ProblemContentreq = {
-                slug: problemspayload.problemSlug[i],
-              };
-              await fetch("http://localhost:8080/getContent", {
-                method: "POST",
-                body: JSON.stringify(contentReqBody),
-              })
-                .then(res => res.json())
-                .then((jsonRes: ProblemContentRes) => {
-                  navigate("/playground", {
-                    state: {
-                      ...jsonRes,
-                      slug: contentReqBody.slug,
-                    }
-                  });
-                })
-                .catch((err) => {
-                  console.log(`Error: ${err}`);
-                })
-              return;
-            }
-            break;
-          }
-        }
-        break;
-      }
-
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">

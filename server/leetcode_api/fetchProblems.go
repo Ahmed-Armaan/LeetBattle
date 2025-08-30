@@ -11,6 +11,7 @@ import (
 
 type Problems struct {
 	ProblemSlug [5]string `json:"problemSlug"`
+	Time        int       `json:"time"`
 }
 
 type GraphQLRequest struct {
@@ -50,7 +51,7 @@ query getProblems($categorySlug: String, $limit: Int, $skip: Int, $filters: Ques
 }
 `
 
-func FetchProblems(diff int) (string, error) {
+func FetchProblems(diff int, time int) (string, error) {
 	lcResp, err := lcFetchRequest(Difficulty[diff], 0)
 	if err != nil {
 		return "", errors.New("Cound not fetch problems")
@@ -78,6 +79,7 @@ func FetchProblems(diff int) (string, error) {
 		}
 	}
 
+	problems.Time = time
 	jsonData, err := json.Marshal(problems)
 	if err != nil {
 		return "", errors.New("Cound not Marshal jsonData")

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useWs } from "./context/wsContext";
 import './tailwind.css'
 import { makeWsActionReq, WsActions } from "./utils/wsActionReq";
+import { UseTimer } from "./context/TimerContext";
 
 function GameControlBar({ leader }: { leader: boolean }) {
   const [gameDuration, setGameDuration] = useState(15);
@@ -10,18 +11,22 @@ function GameControlBar({ leader }: { leader: boolean }) {
   const [dropDownState, toggleDropDown] = useState(false);
   const navigate = useNavigate();
   const { wsContextVal } = useWs();
+  const { setTime } = UseTimer();
   const ss = sessionStorage.getItem("roomData");
 
   const difficultyOptions = ["Easy", "Medium", "Hard"];
 
-  const makeWsReq = () => {
+  const makeWsStartReq = () => {
     if (!ss || !wsContextVal) return;
 
     try {
       const parsed = JSON.parse(ss);
       const roomId = parsed.roomId;
       if (roomId) {
-        makeWsActionReq(WsActions.StartGame, roomId, gameDifficulty.toString(), wsContextVal);
+        //setTime(gameDuration);
+        var payload: string = gameDuration.toString() + gameDifficulty.toString();
+        console.log(payload);
+        makeWsActionReq(WsActions.StartGame, roomId, payload, wsContextVal);
       }
     } catch (e) {
       console.error("Invalid session storage format:", e);
@@ -79,7 +84,7 @@ function GameControlBar({ leader }: { leader: boolean }) {
           {leader &&
             <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500"
               onClick={() => {
-                makeWsReq();
+                makeWsStartReq();
               }}
             >
               Start

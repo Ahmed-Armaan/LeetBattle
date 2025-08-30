@@ -1,5 +1,5 @@
 // ws requires a {action, roomId, payload} to interract
-interface WsActionsReq {
+export interface WsActionsReq {
 	action: string,
 	roomid: string,
 	payload: string,
@@ -11,6 +11,9 @@ const WsActions = {
 	SendSolution: "send_solution",
 	Forfiet: "forfiet",
 	Starting: "starting",
+	SetTimer: "set_timer",
+	SwitchTeam: "switch_team",
+	Exit: "exit_room",
 	Error: "error",
 	Test: "test",
 }
@@ -30,22 +33,4 @@ function makeWsActionReq(action: string, roomid: string, payload: string, ws: We
 	ws.send(JSON.stringify(wsActionReq));
 }
 
-//function receiveWsRes(msg: string) {
-//	var wsReq: WsActionsReq = JSON.parse(msg);
-//
-//	switch (wsReq.action) {
-//		case WsActions.JoinNotify:
-//			SetTeams({ msg: wsReq.payload });
-//			break;
-//		case WsActions.Test:
-//			var Testpayload: string = wsReq.payload;
-//			console.log(`test message : ${Testpayload}`);
-//			break;
-//		case WsActions.StartGame:
-//			GetProblem({ msg: wsReq.payload });
-//			break;
-//	}
-//}
-
 export { makeWsActionReq, WsActions };
-export type { WsActionsReq };

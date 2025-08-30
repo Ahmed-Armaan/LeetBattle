@@ -90,10 +90,9 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 
 	roomsMu.Lock()
 	rooms[string(roomId)] = &Room{
-		LeaderKey:      string(leaderKey),
-		Teams:          [2][5]*Player{},
-		NextEmptyPlace: [2]int{0, 0},
-		ch:             make(chan string),
+		LeaderKey: string(leaderKey),
+		Teams:     [2][5]*Player{},
+		ch:        make(chan string),
 	}
 	new_room := rooms[string(roomId)]
 	roomsMu.Unlock()
@@ -115,9 +114,24 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 		if !exits {
 			return
 		}
-		if room.NextEmptyPlace == [2]int{0, 0} {
+
+		isRoomEmpty := true
+		for i := range 2 {
+			for j := range 5 {
+				if room.Teams[i][j] != nil {
+					isRoomEmpty = false
+					break
+				}
+			}
+			if !isRoomEmpty {
+				break
+			}
+		}
+
+		if isRoomEmpty {
 			delete(rooms, string(roomId))
 		}
+
 		roomsMu.Unlock()
 	}()
 }
@@ -145,7 +159,7 @@ func joinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if room.NextEmptyPlace == [2]int{-1, -1} {
+	if room.isRoomFull() {
 		http.Error(w, "Room already full", http.StatusBadRequest)
 		return
 	}
@@ -212,4 +226,16 @@ func submit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
+}
+
+func (Room *Room) isRoomFull() bool {
+	for i := range 2 {
+		for j := range 5 {
+			if Room.Teams[i][j] == nil {
+				return false
+			}
+		}
+	}
+
+	return true
 }
