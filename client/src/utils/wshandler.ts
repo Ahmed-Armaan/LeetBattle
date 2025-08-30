@@ -90,8 +90,7 @@ export function receiveWsResFactory(deps: WsHandlerDeps) {
 			}
 
 			case WsActions.Exit:
-				const navigate = useNavigate();
-				navigate("/rooms");
+				window.location.href = "/rooms"
 				break;
 
 			case WsActions.SetTimer:
