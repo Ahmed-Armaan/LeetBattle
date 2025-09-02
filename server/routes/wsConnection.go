@@ -366,6 +366,35 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
 		Room.ch <- reqBuf.String()
 
+	case SendSolution:
+		type Position struct {
+			Team  int `json:"team"`
+			Index int `json:"index"`
+		}
+		position := Position{-1, -1}
+
+		for i := range 2 {
+			for j := range 5 {
+				if Room.Teams[i][j] == nil {
+					continue
+				} else if Room.Teams[i][j].Conn == conn {
+					position = Position{i, j}
+					break
+				}
+			}
+		}
+
+		if position != (Position{-1, -1}) {
+			jsonBytes, err := json.Marshal(position)
+			if err != nil {
+				return
+			}
+
+			wsReq.Payload = string(jsonBytes)
+			_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+			Room.ch <- reqBuf.String()
+		}
+
 	case SwitchTeam:
 		switchTeam(wsReq.RoomId, wsReq.Payload)
 

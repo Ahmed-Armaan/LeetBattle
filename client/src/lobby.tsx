@@ -13,6 +13,7 @@ import Loading from "./loading";
 import "./tailwind.css";
 import { receiveWsResFactory } from "./utils/wshandler";
 import { UseTimer } from "./context/TimerContext";
+import { UseGameState } from "./context/GameState";
 
 interface Teams {
   team1: string[];
@@ -46,6 +47,7 @@ function Lobby() {
   const { setwsContext } = useWs();
   const { team1, team2, setteam1context, setteam2context, setTeam1Scores, setTeam2Scores } = UseTeams();
   const { time, setTime } = UseTimer();
+  const { setRunning, setWinningTeam } = UseGameState();
   //  const { title, description, setTitileContext, setDescriptionContext } = UseProblem();
   const [username, setUsername] = useState("");
   const [isLeader, setLeader] = useState(false);
@@ -84,6 +86,8 @@ function Lobby() {
       currTeamsRef,
       usernameRef,
       navigate,
+      //setRunning,
+      //setWinningTeam,
     });
 
     ws.onopen = () => {

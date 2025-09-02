@@ -1,21 +1,23 @@
-// utils/wsHandlers.ts
 import { useNavigate } from "react-router";
 import { WsActions } from "./wsActionReq";
 import type { WsActionsReq } from "./wsActionReq";
 import type { NavigateFunction } from "react-router";
 import type { ProblemContentRes } from "../lobby";
+import type { Dispatch, SetStateAction } from "react";
 
 interface WsHandlerDeps {
 	setteam1context: (team: string[]) => void;
 	setteam2context: (team: string[]) => void;
-	setTeam1Scores: (score: number) => void;
-	setTeam2Scores: (score: number) => void;
+	setTeam1Scores: Dispatch<SetStateAction<number>>;
+	setTeam2Scores: Dispatch<SetStateAction<number>>;
 	toggleLoading: (b: boolean) => void;
 	setTime: (time: number) => void;
 	//time: number;
 	currTeamsRef: React.MutableRefObject<{ team1: string[], team2: string[] }>;
 	usernameRef: React.MutableRefObject<string>;
 	navigate: NavigateFunction;
+	setRunning: (state: boolean) => void;
+	setWinningTeam: (team: number) => void;
 }
 
 interface ProblemContentreq {
@@ -96,6 +98,21 @@ export function receiveWsResFactory(deps: WsHandlerDeps) {
 			case WsActions.SetTimer:
 				console.log(`Game time: ${wsReq.payload}`);
 				deps.setTime(parseInt(wsReq.payload));
+				break;
+
+			case WsActions.SendSolution:
+				console.log(`Received message: ${wsReq.payload}`);
+				var jsonData = JSON.parse(wsReq.payload);
+				console.log(`${jsonData.index}, ${jsonData.team}`)
+				if (jsonData.team === 0) {
+					deps.setTeam1Scores((prevScore) => {
+						return (prevScore - 1)
+					});
+				} else if (jsonData.team === 1) {
+					deps.setTeam2Scores((prevScore) => {
+						return (prevScore - 1);
+					});
+				}
 				break;
 		}
 	}

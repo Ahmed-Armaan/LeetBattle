@@ -3,9 +3,10 @@ import { useWs } from "./context/wsContext";
 import { WsContextProvider } from "./context/wsContext";
 //import { UseProblem } from "./context/problemContext";
 import { WsActions, makeWsActionReq } from "./utils/wsActionReq";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import { UseTeams } from "./context/teamContext";
 import { UseTimer } from "./context/TimerContext";
+import { UseGameState } from "./context/GameState";
 import { TeamContextProvider } from "./context/teamContext";
 import { type CodeSnippet, type ProblemContentRes } from "./lobby";
 import type { PostData } from "./home";
@@ -14,6 +15,7 @@ import Monaco from "./editor";
 import Timer from "./timer";
 import type * as monaco from "monaco-editor";
 import { handleSubmitRes } from "./utils/submitResHandler";
+import EndScreen from "./gameEndScreen";
 import { NavLink } from "react-router-dom";
 
 interface SubmissionReq {
@@ -62,8 +64,11 @@ function PlayGround() {
   const msgRef = useRef<HTMLDivElement>(null);
   const [currLanguage, setLanguage] = useState("cpp");
   const [gameTimerup, toggleGameTimeState] = useState(false);
+  const [msgValue, setMsgValue] = useState<number>(0);
   const [showMsg, toggleMsg] = useState(false);
+  const [accepted, setaccepted] = useState(false);
   const { team1, team2, team1ScoresLeft, team2ScoresLeft, setTeam1Scores, setTeam2Scores } = UseTeams();
+  const { running, setRunning, winningTeam, setWinningTeam } = UseGameState();
   const { time, setTime } = UseTimer();
 
   const langs: string[] = ["cpp", "java", "c", "python", "golang", "rust", "javascript", "typescript"];
@@ -93,8 +98,20 @@ function PlayGround() {
     setBoilerplate(newMap);
   }, [state.codeSnippets]);
 
+  useEffect(() => {
+    if (team1ScoresLeft === 0) {
+      console.log(`team 1 won`);
+      setRunning(false);
+      setMsgValue(1);
+    } else if (team2ScoresLeft === 0) {
+      console.log(`team 2 won`);
+      setRunning(false);
+      setMsgValue(2);
+    }
+  }, [team1ScoresLeft, team2ScoresLeft, setRunning]);
+
   const makeSubmission = async () => {
-    const ss = sessionStorage.getItem("leetcode-data");
+    var ss = sessionStorage.getItem("leetcode-data");
     if (editorRef.current?.getValue() && ss) {
       var submissionReq: SubmissionReq = {
         slug: state.slug,
@@ -115,6 +132,15 @@ function PlayGround() {
             var msg: string = handleSubmitRes(jsonRes);
             msgRef.current.innerHTML = msg;
             toggleMsg(true);
+
+            if (jsonRes.state === "SUCCESS") {
+              ss = sessionStorage.getItem("roomData");
+              if (ss) {
+                var roomId = JSON.parse(ss).roomId;
+                makeWsActionReq(WsActions.SendSolution, roomId, "ACCEPTED", wsContextVal);
+                setaccepted(true);
+              }
+            }
           }
         })
         .catch((err) => console.log(err));
@@ -123,6 +149,8 @@ function PlayGround() {
 
   return (
     <>
+      {accepted && msgValue === 0 && <EndScreen msgCode={0} />}
+      {msgValue !== 0 && <EndScreen msgCode={msgValue} />}
       <Navbar />
       <div className="flex p-2 bg-black gap-2">
 

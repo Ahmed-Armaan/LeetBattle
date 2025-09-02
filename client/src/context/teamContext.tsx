@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 
 interface TeamsContextType {
   team1: string[];
@@ -7,8 +7,8 @@ interface TeamsContextType {
   team2ScoresLeft: number;
   setteam1context: (team: string[]) => void;
   setteam2context: (team: string[]) => void;
-  setTeam1Scores: (score: number) => void;
-  setTeam2Scores: (score: number) => void;
+  setTeam1Scores: Dispatch<SetStateAction<number>>;
+  setTeam2Scores: Dispatch<SetStateAction<number>>;
 }
 
 const TeamContext = createContext<TeamsContextType | undefined>(undefined);
@@ -16,8 +16,8 @@ const TeamContext = createContext<TeamsContextType | undefined>(undefined);
 export function TeamContextProvider({ children }: { children: ReactNode }) {
   const [team1, setTeam1] = useState<string[]>([]);
   const [team2, setTeam2] = useState<string[]>([]);
-  const [team1ScoresLeft, setTeam1Scores] = useState(0);
-  const [team2ScoresLeft, setTeam2Scores] = useState(0);
+  const [team1ScoresLeft, setTeam1Scores] = useState<number>(0);
+  const [team2ScoresLeft, setTeam2Scores] = useState<number>(0);
 
   return (
     <TeamContext.Provider value={{

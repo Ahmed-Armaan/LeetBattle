@@ -4,6 +4,7 @@ import { useWs } from "./context/wsContext";
 import './tailwind.css'
 import { makeWsActionReq, WsActions } from "./utils/wsActionReq";
 import { UseTimer } from "./context/TimerContext";
+import { UseGameState } from "./context/GameState";
 
 function GameControlBar({ leader }: { leader: boolean }) {
   const [gameDuration, setGameDuration] = useState(15);
@@ -12,6 +13,7 @@ function GameControlBar({ leader }: { leader: boolean }) {
   const navigate = useNavigate();
   const { wsContextVal } = useWs();
   const { setTime } = UseTimer();
+
   const ss = sessionStorage.getItem("roomData");
 
   const difficultyOptions = ["Easy", "Medium", "Hard"];
