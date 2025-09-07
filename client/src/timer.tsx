@@ -3,7 +3,6 @@ import { makeWsActionReq } from "./utils/wsActionReq";
 
 function Timer({ time, toggleGameTimeState }: {
   time: number;
-  gameTimerUp: boolean;
   toggleGameTimeState: React.Dispatch<React.SetStateAction<boolean>>;
 }
 ) {

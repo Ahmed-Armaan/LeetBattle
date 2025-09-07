@@ -110,6 +110,17 @@ function PlayGround() {
     }
   }, [team1ScoresLeft, team2ScoresLeft, setRunning]);
 
+  useEffect(() => {
+    if (gameTimerup) {
+      if (ss) {
+        var roomId = JSON.parse(ss).roomId;
+        makeWsActionReq(WsActions.TimeUp, roomId, "ACCEPTED", wsContextVal);
+      }
+      setRunning(false);
+      setMsgValue(3);
+    }
+  }, [gameTimerup])
+
   const makeSubmission = async () => {
     var ss = sessionStorage.getItem("leetcode-data");
     if (editorRef.current?.getValue() && ss) {
@@ -133,7 +144,7 @@ function PlayGround() {
             msgRef.current.innerHTML = msg;
             toggleMsg(true);
 
-            if (jsonRes.state === "SUCCESS") {
+            if (jsonRes.status_code === 10) {
               ss = sessionStorage.getItem("roomData");
               if (ss) {
                 var roomId = JSON.parse(ss).roomId;
@@ -178,7 +189,6 @@ function PlayGround() {
                     Time Remaining:{" "}
                     <Timer
                       time={time}
-                      gameTimerUp={gameTimerup}
                       toggleGameTimeState={toggleGameTimeState}
                     />
                   </span>
@@ -191,9 +201,6 @@ function PlayGround() {
                   onClick={() => makeSubmission()}
                 >
                   Submit
-                </button>
-                <button className="px-4 py-2 bg-red-600 rounded hover:bg-red-700 h-10 w-full">
-                  Forfeit
                 </button>
                 <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 h-10 w-full"
                   onClick={() => toggleMsg(!showMsg)}

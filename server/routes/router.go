@@ -19,6 +19,7 @@ type problemReq struct {
 
 func RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/ping", ping)
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/create", createRoom)
 	mux.HandleFunc("/join", joinRoom)
@@ -43,6 +44,11 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Pong"})
 }
 
 func login(w http.ResponseWriter, r *http.Request) {

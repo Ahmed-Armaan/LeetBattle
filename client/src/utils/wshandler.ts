@@ -16,8 +16,6 @@ interface WsHandlerDeps {
 	currTeamsRef: React.MutableRefObject<{ team1: string[], team2: string[] }>;
 	usernameRef: React.MutableRefObject<string>;
 	navigate: NavigateFunction;
-	setRunning: (state: boolean) => void;
-	setWinningTeam: (team: number) => void;
 }
 
 interface ProblemContentreq {

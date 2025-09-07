@@ -14,6 +14,7 @@ const WsActions = {
 	SetTimer: "set_timer",
 	SwitchTeam: "switch_team",
 	Exit: "exit_room",
+	TimeUp: "time_up",
 	Error: "error",
 	Test: "test",
 }

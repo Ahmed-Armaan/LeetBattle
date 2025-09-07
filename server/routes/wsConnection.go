@@ -17,6 +17,7 @@ type Room struct {
 	LeaderKey string
 	Teams     [2][5]*Player
 	ch        chan string
+	context   GameContext
 	Mutex     sync.RWMutex
 }
 
@@ -43,6 +44,11 @@ type WsResFormat struct {
 	Error   string `json:"error"`
 }
 
+type Position struct {
+	Team  int `json:"team"`
+	Index int `json:"index"`
+}
+
 var (
 	rooms       = make(map[string]*Room)
 	connRoomMap = make(map[*websocket.Conn]*Room)
@@ -56,11 +62,11 @@ const (
 	SendSolution = "send_solution"
 	Forfiet      = "forfiet"
 	Starting     = "starting"
-	//SetTimer     = "set_timer"
-	SwitchTeam = "switch_team"
-	Exit       = "exit_room"
-	Error      = "error"
-	Test       = "test"
+	SwitchTeam   = "switch_team"
+	Exit         = "exit_room"
+	TimeUp       = "time_up"
+	Error        = "error"
+	Test         = "test"
 )
 
 var upgrader = websocket.Upgrader{
@@ -112,7 +118,7 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 	var reqBuf bytes.Buffer
 
 	if !ok {
-		fmt.Printf("Yo the room %s is gonr poof!!\n", wsReq.RoomId)
+		fmt.Printf("Yo the room %s is gone poof!!\n", wsReq.RoomId)
 		wsReq.Payload = "room not found"
 		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
 		conn.WriteMessage(websocket.TextMessage, reqBuf.Bytes())
@@ -130,25 +136,30 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 
 	foundRoom := false
 	a, b := -1, -1
-	for i := 0; i < 2 && !foundRoom; i++ {
+
+	for i := range 2 {
 		for j := range 5 {
-			if Room.Teams[i][j] == nil {
-				//Room.Teams[i][j] = &currPlayer
-				a = i
-				b = j
-				foundRoom = true
-			} else if Room.Teams[i][j].PlayerId == currPlayer.PlayerId {
+			if Room.Teams[i][j] != nil && Room.Teams[i][j].PlayerId == currPlayer.PlayerId {
 				Room.Teams[i][j].Conn = conn
 				connMapmu.Lock()
 				connRoomMap[conn] = Room
 				connMapmu.Unlock()
 				return
 			}
+
+			if Room.Teams[i][j] == nil && !foundRoom {
+				a, b = i, j
+				foundRoom = true
+			}
 		}
 	}
 
 	if foundRoom {
 		Room.Teams[a][b] = &currPlayer
+		Room.context.teams[a][b] = currPlayer.PlayerId
+		Room.context.PlayerStatus[a][b] = NS
+		Room.context.currPlayercnt++
+
 		connMapmu.Lock()
 		connRoomMap[conn] = Room
 		connMapmu.Unlock()
@@ -183,11 +194,10 @@ func announceTeams(Room *Room) {
 			switch i {
 			case 0:
 				team1 = append(team1, Room.Teams[i][j].PlayerId)
-				fmt.Printf("team%d added: %s\n", 0, Room.Teams[i][j].PlayerId)
 			case 1:
 				team2 = append(team2, Room.Teams[i][j].PlayerId)
-				fmt.Printf("team%d added: %s\n", 1, Room.Teams[i][j].PlayerId)
 			}
+			fmt.Printf("team%d added: %s at pos %d\n", i, Room.Teams[i][j].PlayerId, j)
 		}
 	}
 
@@ -247,6 +257,10 @@ func removePlayerByConn(conn *websocket.Conn) *websocket.Conn {
 			if conn == Room.Teams[i][j].Conn {
 				removedPlayerConn = Room.Teams[i][j].Conn
 				Room.Teams[i][j] = nil
+				Room.context.teams[i][j] = ""
+				Room.context.PlayerStatus[i][j] = ""
+				Room.context.currPlayercnt--
+				CheckGameState(Room.context)
 				break
 			}
 		}
@@ -276,6 +290,10 @@ func removePlayerById(roomId string, playerId string) *websocket.Conn {
 			if playerId == Room.Teams[i][j].PlayerId {
 				removedPlayerConn = Room.Teams[i][j].Conn
 				Room.Teams[i][j] = nil
+				Room.context.teams[i][j] = ""
+				Room.context.PlayerStatus[i][j] = ""
+				Room.context.currPlayercnt--
+				CheckGameState(Room.context)
 				break
 			}
 		}
@@ -313,10 +331,36 @@ func switchTeam(roomId string, playerId string) {
 	for j := 0; j < 5 && currPosi != -1 && currPosj != -1; j++ {
 		if Room.Teams[nextPosi][j] == nil {
 			Room.Teams[nextPosi][j] = Room.Teams[currPosi][currPosj]
+			Room.context.teams[nextPosi][j] = playerId
+			Room.context.PlayerStatus[nextPosi][j] = NS
+
 			Room.Teams[currPosi][currPosj] = nil
+			Room.context.teams[currPosi][currPosj] = ""
+			Room.context.PlayerStatus[currPosi][currPosj] = ""
 			announceTeams(Room)
 			break
 		}
+	}
+}
+
+func getPlayerPos(conn *websocket.Conn, Room *Room) (Position, error) {
+	position := Position{-1, -1}
+
+	for i := range 2 {
+		for j := range 5 {
+			if Room.Teams[i][j] == nil {
+				continue
+			} else if Room.Teams[i][j].Conn == conn {
+				position = Position{i, j}
+				break
+			}
+		}
+	}
+
+	if position == (Position{-1, -1}) {
+		return Position{}, fmt.Errorf("The player cannot be found")
+	} else {
+		return position, nil
 	}
 }
 
@@ -359,6 +403,7 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 				fmt.Println("Error!!")
 			} else {
 				payload = problems
+				Room.context.problems = problems
 			}
 		}
 
@@ -367,36 +412,36 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 		Room.ch <- reqBuf.String()
 
 	case SendSolution:
-		type Position struct {
-			Team  int `json:"team"`
-			Index int `json:"index"`
-		}
-		position := Position{-1, -1}
-
-		for i := range 2 {
-			for j := range 5 {
-				if Room.Teams[i][j] == nil {
-					continue
-				} else if Room.Teams[i][j].Conn == conn {
-					position = Position{i, j}
-					break
-				}
-			}
+		playerPos, err := getPlayerPos(conn, Room)
+		if err != nil {
+			fmt.Println("Error!!!")
 		}
 
-		if position != (Position{-1, -1}) {
-			jsonBytes, err := json.Marshal(position)
-			if err != nil {
-				return
-			}
-
-			wsReq.Payload = string(jsonBytes)
-			_ = json.NewEncoder(&reqBuf).Encode(wsReq)
-			Room.ch <- reqBuf.String()
+		jsonBytes, err := json.Marshal(playerPos)
+		if err != nil {
+			return
 		}
+
+		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = SA
+		Room.context.currPlayercnt--
+		CheckGameState(Room.context)
+		wsReq.Payload = string(jsonBytes)
+		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
+		Room.ch <- reqBuf.String()
 
 	case SwitchTeam:
 		switchTeam(wsReq.RoomId, wsReq.Payload)
+
+	case TimeUp:
+		playerPos, err := getPlayerPos(conn, Room)
+		if err != nil {
+			fmt.Println("Error!!!")
+		}
+
+		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = TU
+		Room.context.currPlayercnt--
+		CheckGameState(Room.context)
+		fmt.Printf("Player at %d, %d has timer Up\n", playerPos.Team, playerPos.Index)
 
 	case Exit:
 		var removed *websocket.Conn
@@ -412,13 +457,5 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 			_ = json.NewEncoder(&reqBuf).Encode(wsReq)
 			removed.WriteMessage(websocket.TextMessage, reqBuf.Bytes())
 		}
-		//	fmt.Printf("maybe removed %s, its time to let them know\n", removed)
-		//	var reqBuf bytes.Buffer
-		//	fmt.Println("1")
-		//	wsReq.Payload = removed
-		//	fmt.Println("2")
-		//	_ = json.NewEncoder(&reqBuf).Encode(wsReq)
-		//	fmt.Println("3")
-		//	Room.ch <- reqBuf.String()
 	}
 }

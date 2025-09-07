@@ -164,7 +164,10 @@ function Rooms() {
               >
                 Join
               </button>
-              <button onClick={() => { changeFormState("default") }}>Back</button>
+              <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition"
+                onClick={() => { changeFormState("default") }}>
+                Back
+              </button>
             </>
           }
 
