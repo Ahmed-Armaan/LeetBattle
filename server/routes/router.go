@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,6 +18,10 @@ type problemReq struct {
 	Slug string `json:"slug"`
 }
 
+type HistoryRequest struct {
+	Username string `json:"username"`
+}
+
 func RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ping", ping)
@@ -26,6 +31,7 @@ func RegisterRoutes() http.Handler {
 	mux.HandleFunc("/ws", WSHandler)
 	mux.HandleFunc("/getContent", getProblemContent)
 	mux.HandleFunc("/submit", submit)
+	mux.HandleFunc("/history", getHistory)
 	handler := corsMiddleware(mux)
 
 	return handler
@@ -98,6 +104,7 @@ func createRoom(w http.ResponseWriter, r *http.Request) {
 	rooms[string(roomId)] = &Room{
 		LeaderKey: string(leaderKey),
 		Teams:     [2][5]*Player{},
+		context:   NewGameContext(string(roomId)),
 		ch:        make(chan string),
 	}
 	new_room := rooms[string(roomId)]
@@ -244,4 +251,29 @@ func (Room *Room) isRoomFull() bool {
 	}
 
 	return true
+}
+
+func getHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+	fmt.Println("HEEStory")
+
+	var username HistoryRequest
+	err := json.NewDecoder(r.Body).Decode(&username)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+	}
+
+	histories := History(username.Username)
+	jsonBytes, err := json.Marshal(histories)
+	if err != nil {
+		http.Error(w, "Received response improper", http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
 }

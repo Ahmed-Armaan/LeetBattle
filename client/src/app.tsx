@@ -3,6 +3,7 @@ import Home from "./home";
 import Rooms from "./rooms";
 import Lobby from "./lobby";
 import PlayGround from "./playground";
+import HistoryPage from "./history";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
   {
     path: "/playground",
     element: <PlayGround />
+  },
+  {
+    path: "/history",
+    element: <HistoryPage />
   },
   {
     path: "*",

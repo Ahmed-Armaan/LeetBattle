@@ -156,9 +156,9 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 
 	if foundRoom {
 		Room.Teams[a][b] = &currPlayer
-		Room.context.teams[a][b] = currPlayer.PlayerId
+		Room.context.Teams[a][b] = currPlayer.PlayerId
 		Room.context.PlayerStatus[a][b] = NS
-		Room.context.currPlayercnt++
+		Room.context.CurrPlayercnt++
 
 		connMapmu.Lock()
 		connRoomMap[conn] = Room
@@ -257,9 +257,9 @@ func removePlayerByConn(conn *websocket.Conn) *websocket.Conn {
 			if conn == Room.Teams[i][j].Conn {
 				removedPlayerConn = Room.Teams[i][j].Conn
 				Room.Teams[i][j] = nil
-				Room.context.teams[i][j] = ""
+				Room.context.Teams[i][j] = ""
 				Room.context.PlayerStatus[i][j] = ""
-				Room.context.currPlayercnt--
+				Room.context.CurrPlayercnt--
 				CheckGameState(Room.context)
 				break
 			}
@@ -290,9 +290,9 @@ func removePlayerById(roomId string, playerId string) *websocket.Conn {
 			if playerId == Room.Teams[i][j].PlayerId {
 				removedPlayerConn = Room.Teams[i][j].Conn
 				Room.Teams[i][j] = nil
-				Room.context.teams[i][j] = ""
+				Room.context.Teams[i][j] = ""
 				Room.context.PlayerStatus[i][j] = ""
-				Room.context.currPlayercnt--
+				Room.context.CurrPlayercnt--
 				CheckGameState(Room.context)
 				break
 			}
@@ -331,11 +331,11 @@ func switchTeam(roomId string, playerId string) {
 	for j := 0; j < 5 && currPosi != -1 && currPosj != -1; j++ {
 		if Room.Teams[nextPosi][j] == nil {
 			Room.Teams[nextPosi][j] = Room.Teams[currPosi][currPosj]
-			Room.context.teams[nextPosi][j] = playerId
+			Room.context.Teams[nextPosi][j] = playerId
 			Room.context.PlayerStatus[nextPosi][j] = NS
 
 			Room.Teams[currPosi][currPosj] = nil
-			Room.context.teams[currPosi][currPosj] = ""
+			Room.context.Teams[currPosi][currPosj] = ""
 			Room.context.PlayerStatus[currPosi][currPosj] = ""
 			announceTeams(Room)
 			break
@@ -403,7 +403,7 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 				fmt.Println("Error!!")
 			} else {
 				payload = problems
-				Room.context.problems = problems
+				Room.context.Problems = problems
 			}
 		}
 
@@ -422,8 +422,9 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 			return
 		}
 
+		fmt.Println(Room.context.Problems)
 		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = SA
-		Room.context.currPlayercnt--
+		Room.context.CurrPlayercnt--
 		CheckGameState(Room.context)
 		wsReq.Payload = string(jsonBytes)
 		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
@@ -439,7 +440,7 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 		}
 
 		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = TU
-		Room.context.currPlayercnt--
+		Room.context.CurrPlayercnt--
 		CheckGameState(Room.context)
 		fmt.Printf("Player at %d, %d has timer Up\n", playerPos.Team, playerPos.Index)
 

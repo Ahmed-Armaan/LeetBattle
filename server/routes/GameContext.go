@@ -1,16 +1,16 @@
 package routes
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 type GameContext struct {
-	roomId        string
-	teams         [5][5]string
-	PlayerStatus  [5][5]string
-	problems      string
-	currPlayercnt int
+	RoomId        string
+	Teams         [2][5]string
+	PlayerStatus  [2][5]string
+	Problems      string
+	CurrPlayercnt int
+	WinningTeam   int
 }
 
 const (
@@ -21,7 +21,7 @@ const (
 
 func NewGameContext(roomId string) GameContext {
 	GameContext := GameContext{}
-	GameContext.roomId = roomId
+	GameContext.RoomId = roomId
 	return GameContext
 }
 
@@ -39,8 +39,20 @@ func CheckGameState(context GameContext) {
 
 	if team1Done || team2Done {
 		fmt.Println("HERRo")
-		var problems map[string]any
-		_ = json.Unmarshal([]byte(context.problems), &problems)
-		fmt.Println(problems)
+		fmt.Println(context.Problems)
+
+		for i := range 2 {
+			for j := range 5 {
+				fmt.Printf("%s -> %s\n", context.Teams[i][j], context.PlayerStatus[i][j])
+			}
+		}
+
+		if team1Done {
+			context.WinningTeam = 1
+		} else if team2Done {
+			context.WinningTeam = 2
+		}
+
+		go Insert(&context)
 	}
 }
