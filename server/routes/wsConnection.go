@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/Ahmed-Armaan/LeetBattle/leetcode_api"
+	"github.com/Ahmed-Armaan/LeetBattle/models"
 	"github.com/gorilla/websocket"
 )
 
@@ -17,7 +18,7 @@ type Room struct {
 	LeaderKey string
 	Teams     [2][5]*Player
 	ch        chan string
-	context   GameContext
+	context   models.GameContext
 	Mutex     sync.RWMutex
 }
 
@@ -101,7 +102,6 @@ func roomBroadcaster(Room *Room) {
 			}
 		}
 		Room.Mutex.RUnlock()
-		fmt.Printf("\nsent a msg\n")
 	}
 }
 
@@ -118,7 +118,6 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 	var reqBuf bytes.Buffer
 
 	if !ok {
-		fmt.Printf("Yo the room %s is gone poof!!\n", wsReq.RoomId)
 		wsReq.Payload = "room not found"
 		_ = json.NewEncoder(&reqBuf).Encode(wsReq)
 		conn.WriteMessage(websocket.TextMessage, reqBuf.Bytes())
@@ -184,7 +183,6 @@ func handleJoin(conn *websocket.Conn, roomId string, playerId string) {
 
 func announceTeams(Room *Room) {
 	var team1, team2 []string
-	fmt.Println("hello from announce Teams()")
 
 	for i := range 2 {
 		for j := range 5 {
@@ -197,7 +195,6 @@ func announceTeams(Room *Room) {
 			case 1:
 				team2 = append(team2, Room.Teams[i][j].PlayerId)
 			}
-			fmt.Printf("team%d added: %s at pos %d\n", i, Room.Teams[i][j].PlayerId, j)
 		}
 	}
 
@@ -227,11 +224,9 @@ func wsReceiver(conn *websocket.Conn) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("read error:", err)
 			removePlayerByConn(conn)
 			break
 		}
-		fmt.Println(string(msg))
 		var wsReq WsReqFormat
 		_ = json.NewDecoder(strings.NewReader(string(msg))).Decode(&wsReq)
 		wsReq.wsActions(conn)
@@ -243,7 +238,6 @@ func removePlayerByConn(conn *websocket.Conn) *websocket.Conn {
 	Room, ok := connRoomMap[conn]
 	connMapmu.RUnlock()
 	if !ok {
-		fmt.Println("Invalid conn")
 		return nil
 	}
 
@@ -276,7 +270,6 @@ func removePlayerById(roomId string, playerId string) *websocket.Conn {
 	roomsMu.Unlock()
 
 	if !ok {
-		fmt.Println("Room Unavailable")
 		return nil
 	}
 
@@ -309,7 +302,6 @@ func switchTeam(roomId string, playerId string) {
 	roomsMu.Unlock()
 
 	if !ok {
-		fmt.Println("Room Unavailable")
 		return
 	}
 
@@ -422,7 +414,6 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 			return
 		}
 
-		fmt.Println(Room.context.Problems)
 		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = SA
 		Room.context.CurrPlayercnt--
 		CheckGameState(Room.context)
@@ -442,7 +433,6 @@ func (wsReq *WsReqFormat) wsActions(conn *websocket.Conn) {
 		Room.context.PlayerStatus[playerPos.Team][playerPos.Index] = TU
 		Room.context.CurrPlayercnt--
 		CheckGameState(Room.context)
-		fmt.Printf("Player at %d, %d has timer Up\n", playerPos.Team, playerPos.Index)
 
 	case Exit:
 		var removed *websocket.Conn

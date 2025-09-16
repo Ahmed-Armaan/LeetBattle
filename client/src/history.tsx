@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 
-type PlayerState = {
+interface PlayerState {
   Player: string;
   State: string;
-};
+}
 
-type MatchHistory = {
-  MatchID: string;
-  Team1ID: string;
-  Team2ID: string;
-  ProblemsID: string;
-  Winner: number;
-  Problems: string[];
-  Team1: PlayerState[];
-  Team2: PlayerState[];
-};
+interface MatchHistory {
+  match_id: string;
+  team1_id: string;
+  team2_id: string;
+  problems_id: string;
+  winner: number;
+  problems: string[];
+  team1: PlayerState[];
+  team2: PlayerState[];
+}
 
 export default function HistoryPage() {
   const [histories, setHistories] = useState<MatchHistory[]>([]);
@@ -28,7 +28,11 @@ export default function HistoryPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),
       });
-      const data = await res.json();
+      const data: MatchHistory[] = await res.json();
+
+      // Optional: log to check data
+      console.log("Fetched match history:", data);
+
       setHistories(data);
     } catch (err) {
       console.error("Failed to fetch history:", err);
@@ -59,20 +63,20 @@ export default function HistoryPage() {
       {!loading && histories.length === 0 && <p>No matches found.</p>}
 
       {histories.map((match) => (
-        <div key={match.MatchID} className="border rounded p-4 mb-4 shadow-sm">
+        <div key={match.match_id} className="border rounded p-4 mb-4 shadow-sm">
           <h2 className="font-bold mb-2">
-            Match {match.MatchID} | Winner Team: {match.Winner}
+            Match {match.match_id} | Winner Team: {match.winner}
           </h2>
 
           <p className="mb-2">
-            <strong>Problems:</strong> {match.Problems.join(", ")}
+            <strong>Problems:</strong> {match.problems.join(", ")}
           </p>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold mb-1">Team 1</h3>
               <ul>
-                {match.Team1.map((p) => (
+                {match.team1.map((p) => (
                   <li key={p.Player}>
                     {p.Player} - <span className="font-mono">{p.State}</span>
                   </li>
@@ -82,7 +86,7 @@ export default function HistoryPage() {
             <div>
               <h3 className="font-semibold mb-1">Team 2</h3>
               <ul>
-                {match.Team2.map((p) => (
+                {match.team2.map((p) => (
                   <li key={p.Player}>
                     {p.Player} - <span className="font-mono">{p.State}</span>
                   </li>

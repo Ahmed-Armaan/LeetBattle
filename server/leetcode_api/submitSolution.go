@@ -114,9 +114,6 @@ func pollSubmissionResult(submissionId string, cookies Cookies, userAgent string
 			return PollRes{}, err
 		}
 
-		fmt.Printf("status = %s\n", pollRes.State)
-		fmt.Printf("msg = %s\n", pollRes.StatusMsg)
-
 		if pollRes.State == "SUCCESS" {
 			return pollRes, nil
 		}
@@ -130,7 +127,6 @@ func Submit(data SubmissionData, userAgent string) (PollRes, error) {
 	if err != nil {
 		return PollRes{}, err
 	}
-	fmt.Printf("submissionId = %d\n", submissionId)
 
 	status, err := pollSubmissionResult(fmt.Sprint(submissionId), data.Cookies, userAgent)
 	if err != nil {

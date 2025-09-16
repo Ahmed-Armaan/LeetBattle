@@ -1,17 +1,9 @@
 package routes
 
 import (
-	"fmt"
+	"github.com/Ahmed-Armaan/LeetBattle/dbInterraction"
+	"github.com/Ahmed-Armaan/LeetBattle/models"
 )
-
-type GameContext struct {
-	RoomId        string
-	Teams         [2][5]string
-	PlayerStatus  [2][5]string
-	Problems      string
-	CurrPlayercnt int
-	WinningTeam   int
-}
 
 const (
 	NS = "not_submitted"
@@ -19,13 +11,13 @@ const (
 	TU = "times_up"
 )
 
-func NewGameContext(roomId string) GameContext {
-	GameContext := GameContext{}
+func NewGameContext(roomId string) models.GameContext {
+	GameContext := models.GameContext{}
 	GameContext.RoomId = roomId
 	return GameContext
 }
 
-func CheckGameState(context GameContext) {
+func CheckGameState(context models.GameContext) {
 	team1Done, team2Done := true, true
 
 	for i := 0; i < 5 && (team1Done || team2Done); i++ {
@@ -38,21 +30,12 @@ func CheckGameState(context GameContext) {
 	}
 
 	if team1Done || team2Done {
-		fmt.Println("HERRo")
-		fmt.Println(context.Problems)
-
-		for i := range 2 {
-			for j := range 5 {
-				fmt.Printf("%s -> %s\n", context.Teams[i][j], context.PlayerStatus[i][j])
-			}
-		}
-
 		if team1Done {
 			context.WinningTeam = 1
 		} else if team2Done {
 			context.WinningTeam = 2
 		}
 
-		go Insert(&context)
+		go dbinterraction.Insert(&context)
 	}
 }

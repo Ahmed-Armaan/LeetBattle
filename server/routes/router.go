@@ -2,10 +2,10 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/Ahmed-Armaan/LeetBattle/dbInterraction"
 	"github.com/Ahmed-Armaan/LeetBattle/leetcode_api"
 	"github.com/Ahmed-Armaan/LeetBattle/utils"
 )
@@ -259,18 +259,24 @@ func getHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	fmt.Println("HEEStory")
 
 	var username HistoryRequest
 	err := json.NewDecoder(r.Body).Decode(&username)
 	if err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
 	}
 
-	histories := History(username.Username)
+	histories, err := dbinterraction.History(username.Username)
+	if err != nil {
+		http.Error(w, "History fetch error", http.StatusInternalServerError)
+		return
+	}
+
 	jsonBytes, err := json.Marshal(histories)
 	if err != nil {
 		http.Error(w, "Received response improper", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
