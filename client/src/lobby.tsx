@@ -71,7 +71,7 @@ function Lobby() {
   }, [currTeams]);
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomId}&player=${playerId}`);
+    const ws = new WebSocket(`${import.meta.env.VITE_WS_URL}/ws?room=${roomId}&player=${playerId}`);
     wsRef.current = ws;
     setwsContext(ws);
 

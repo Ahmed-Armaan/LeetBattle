@@ -19,16 +19,6 @@ function Rooms() {
   const navigate = useNavigate();
   const { wsContextVal, setwsContext } = useWs();
 
-  //  useEffect(() => {
-  //    const data = sessionStorage.getItem("leetcode-data");
-  //    if (data) {
-  //      const parsed = JSON.parse(data);
-  //      if (parsed?.username) {
-  //        setUsername(parsed.username);
-  //      }
-  //    }
-  //  }, []);
-
   useEffect(() => {
     if (wsContextVal !== null) {
       wsContextVal.close();
@@ -54,7 +44,7 @@ function Rooms() {
 
   const createRoomReq = async () => {
     try {
-      const response = await fetch("http://localhost:8080/create", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/create`, {
         method: "GET",
       });
 
@@ -85,7 +75,7 @@ function Rooms() {
     if (roomId === undefined) return;
 
     try {
-      const response = await fetch("http://localhost:8080/join", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

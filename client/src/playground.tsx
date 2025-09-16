@@ -132,7 +132,7 @@ function PlayGround() {
         cookies: JSON.parse(ss).leetcodeData,
       }
 
-      await fetch("http://localhost:8080/submit", {
+      await fetch(`${import.meta.env.VITE_API_URL}/submit`, {
         method: "POST",
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(submissionReq),

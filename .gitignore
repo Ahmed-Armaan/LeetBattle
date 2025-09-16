@@ -1,2 +1,3 @@
 node_modules
 tmux_init.sh
+.env

@@ -66,7 +66,7 @@ export function receiveWsResFactory(deps: WsHandlerDeps) {
 							slug: problemspayload.problemSlug[i],
 						};
 
-						await fetch("http://localhost:8080/getContent", {
+						await fetch(`${import.meta.env.VITE_API_URL}/getContent`, {
 							method: "POST",
 							body: JSON.stringify(contentReqBody),
 						})
