@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"github.com/Ahmed-Armaan/LeetBattle/routes"
 	"net/http"
+	"os"
 )
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	mux := routes.RegisterRoutes()
-	fmt.Println("Server running at 8080")
-	http.ListenAndServe(":8080", mux)
+	fmt.Printf("Server running at %s", port)
+	http.ListenAndServe(":"+port, mux)
 }
