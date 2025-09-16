@@ -3,9 +3,7 @@ import { useParams } from "react-router";
 import { useNavigate } from "react-router";
 import { useWs } from "./context/wsContext";
 import { UseTeams } from "./context/teamContext";
-import { UseProblem } from "./context/problemContext";
 import { makeWsActionReq, WsActions } from "./utils/wsActionReq";
-import type { WsActionsReq } from "./utils/wsActionReq";
 import Navbar from "./navbar";
 import GameConrolBar from "./gamecontrolbar";
 import TeamCard from "./teamCard";
@@ -13,7 +11,6 @@ import Loading from "./loading";
 import "./tailwind.css";
 import { receiveWsResFactory } from "./utils/wshandler";
 import { UseTimer } from "./context/TimerContext";
-import { UseGameState } from "./context/GameState";
 
 interface Teams {
   team1: string[];
@@ -46,9 +43,7 @@ function Lobby() {
   const { roomId, playerId } = useParams();
   const { setwsContext } = useWs();
   const { team1, team2, setteam1context, setteam2context, setTeam1Scores, setTeam2Scores } = UseTeams();
-  const { time, setTime } = UseTimer();
-  const { setRunning, setWinningTeam } = UseGameState();
-  //  const { title, description, setTitileContext, setDescriptionContext } = UseProblem();
+  const { setTime } = UseTimer();
   const [username, setUsername] = useState("");
   const [isLeader, setLeader] = useState(false);
   const [currTeams, setCurrTeams] = useState<Teams>({ team1, team2 });

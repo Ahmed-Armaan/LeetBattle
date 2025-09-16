@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router";
 import { WsActions } from "./wsActionReq";
 import type { WsActionsReq } from "./wsActionReq";
 import type { NavigateFunction } from "react-router";

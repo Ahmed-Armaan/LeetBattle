@@ -1,14 +1,11 @@
 import { useLocation } from "react-router-dom";
 import { useWs } from "./context/wsContext";
-import { WsContextProvider } from "./context/wsContext";
-//import { UseProblem } from "./context/problemContext";
 import { WsActions, makeWsActionReq } from "./utils/wsActionReq";
-import React, { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UseTeams } from "./context/teamContext";
 import { UseTimer } from "./context/TimerContext";
 import { UseGameState } from "./context/GameState";
-import { TeamContextProvider } from "./context/teamContext";
-import { type CodeSnippet, type ProblemContentRes } from "./lobby";
+import { type ProblemContentRes } from "./lobby";
 import type { PostData } from "./home";
 import Navbar from "./navbar";
 import Monaco from "./editor";
@@ -16,7 +13,6 @@ import Timer from "./timer";
 import type * as monaco from "monaco-editor";
 import { handleSubmitRes } from "./utils/submitResHandler";
 import EndScreen from "./gameEndScreen";
-import { NavLink } from "react-router-dom";
 
 interface SubmissionReq {
   slug: string;
@@ -67,9 +63,9 @@ function PlayGround() {
   const [msgValue, setMsgValue] = useState<number>(0);
   const [showMsg, toggleMsg] = useState(false);
   const [accepted, setaccepted] = useState(false);
-  const { team1, team2, team1ScoresLeft, team2ScoresLeft, setTeam1Scores, setTeam2Scores } = UseTeams();
-  const { running, setRunning, winningTeam, setWinningTeam } = UseGameState();
-  const { time, setTime } = UseTimer();
+  const { team1ScoresLeft, team2ScoresLeft } = UseTeams();
+  const { setRunning } = UseGameState();
+  const { time } = UseTimer();
 
   const langs: string[] = ["cpp", "java", "c", "python", "golang", "rust", "javascript", "typescript"];
   const state = location.state as ProblemContentRes & {

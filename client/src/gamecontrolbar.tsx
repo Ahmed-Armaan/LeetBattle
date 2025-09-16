@@ -1,21 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { useWs } from "./context/wsContext";
 import './tailwind.css'
 import { makeWsActionReq, WsActions } from "./utils/wsActionReq";
-import { UseTimer } from "./context/TimerContext";
-import { UseGameState } from "./context/GameState";
 
 function GameControlBar({ leader }: { leader: boolean }) {
   const [gameDuration, setGameDuration] = useState(15);
   const [gameDifficulty, setGameDifficulty] = useState(1);// using index of the array rather than string
   const [dropDownState, toggleDropDown] = useState(false);
-  const navigate = useNavigate();
   const { wsContextVal } = useWs();
-  const { setTime } = UseTimer();
 
   const ss = sessionStorage.getItem("roomData");
-
   const difficultyOptions = ["Easy", "Medium", "Hard"];
 
   const makeWsStartReq = () => {
