@@ -1,3 +1,4 @@
 node_modules
 tmux_init.sh
 .env
+server/.env

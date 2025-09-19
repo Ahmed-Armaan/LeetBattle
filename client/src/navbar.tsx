@@ -18,6 +18,11 @@ function Navbar({ inLobby = false, roomId = "" }) {
     }
   }, []);
 
+  const logOut = () => {
+    sessionStorage.clear();
+    navigate("/")
+  }
+
   return (
     <div className="bg-gray-900 text-white px-6 py-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
@@ -46,7 +51,9 @@ function Navbar({ inLobby = false, roomId = "" }) {
                 <li className="px-4 py-2 hover:bg-gray-500 cursor-pointer"
                   onClick={() => navigate("/history")}
                 >History</li>
-                <li className="px-4 py-2 hover:bg-gray-500 cursor-pointer">LogOut</li>
+                <li className="px-4 py-2 hover:bg-gray-500 cursor-pointer"
+                  onClick={logOut}
+                >LogOut</li>
               </ul>
             </div>
           )}
